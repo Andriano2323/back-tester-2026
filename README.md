@@ -91,6 +91,12 @@ Add / Modify / Cancel / Clear mutate the book.
 Trade / Fill are explicitly handled as non-mutating events for the current reconstruction model.
 ```
 
+Unknown-order diagnostics are kept as counters plus a small sample of the first cases, so large
+datasets do not spam stderr. An unknown full-state `Modify` is recovered as `Add` and counted as
+`unknown_modify_recovered_as_add_count`; an incomplete unknown `Modify` is skipped and counted as
+`unknown_modify_skipped_count`; an unknown `Cancel` is skipped and counted as
+`unknown_cancel_skipped_count`.
+
 Final `best_bid` / `best_ask` can be `<none>` when the file ends after exchange clear/reset events. Snapshots above the final summary demonstrate non-empty intraday book states.
 
 Validated real-file smoke result on `data/XEUR-20260409-HTT6HHLT6R/xeur-eobi-20260309.mbo.json`:
@@ -115,6 +121,9 @@ Final LOB Summary
 instrument_count=<N>
 processed_events=<N>
 unresolved_events=<N>
+unknown_modify_recovered_as_add_count=<N>
+unknown_modify_skipped_count=<N>
+unknown_cancel_skipped_count=<N>
 instrument_id=<id> resting_orders=<N> best_bid=<price|<none>> best_ask=<price|<none>>
 ...
 
@@ -139,7 +148,13 @@ For the hard-task ingestion modes, the same LOB processor can run after the chro
   --lob --snapshot-interval-events 3 --max-snapshots 2 --snapshot-depth 5 --verbose
 ```
 
-Both modes dispatch the merged stream sequentially, so LOB updates remain deterministic. The synthetic hard LOB fixture verifies that a cancel with `instrument_id=0` is routed through the `order_id -> instrument_id` mapping.
+Threading model:
+
+- Ingestion is parallelized in hard modes: each discovered input file has its own producer thread.
+- Merge work is also parallelizable. Flat uses one k-way merge over producer queues; hierarchy uses a 4-way tree of merger stages.
+- In the default LOB processor, book mutation is intentionally sequential. The global dispatcher consumes the final merged stream and calls `BookManager` in strict `(timestamp, source_file_id, source_sequence)` order, so LOB state is deterministic and globally chronological.
+
+Both hard modes therefore parallelize file ingestion and merge stages, then apply current LOB updates in the global dispatcher. The synthetic hard LOB fixture verifies that a cancel with `instrument_id=0` is routed through the `order_id -> instrument_id` mapping.
 
 Flat and hierarchy LOB equivalence is tested automatically with `BookManager::stableStateDigest()`. The digest sorts instruments by `instrument_id`, bids descending, asks ascending, and includes processed/unresolved counts, best bid/ask, resting order counts, and all L2 price levels. Equal timestamps are deterministic because the merge comparator uses `(timestamp, source_file_id, source_sequence)`.
 
@@ -161,9 +176,9 @@ The dispatcher still reads events in strict order and updates `BookManager` sequ
 
 ### Sharded LOB Workers
 
-`--lob-workers 2` and `--lob-workers 4` keep the global merge/dispatcher order, but route each resolved instrument to a fixed worker queue. Each worker owns its `BookManager` subset and updates its books sequentially, so per-instrument FIFO order is preserved.
+Instrument-sharded LOB workers are implemented behind `--lob-workers N`. `--lob-workers 2` and `--lob-workers 4` keep the global merge/dispatcher order, but route each resolved instrument to a fixed worker queue. Each worker owns its `BookManager` subset and updates its books sequentially, so per-instrument FIFO order is preserved.
 
-The dispatcher keeps a lightweight `order_id -> instrument_id` router index for events whose `instrument_id` is missing. `Add` records the mapping, `Modify` keeps or updates it, full `Cancel` and `Clear` remove it, and unknown missing-instrument events are counted as unresolved.
+The dispatcher keeps a lightweight `order_id -> instrument_id` router index for events whose `instrument_id` is missing. `Add` records the mapping, `Modify` keeps or updates it, full `Cancel` and `Clear` remove it, and unknown missing-instrument events are counted as unresolved. This routing is required for sharding because Databento-style `Modify`, `Cancel`, and `Fill` events can arrive without `instrument_id`; those events must be resolved from `order_id` before they can be sent to the correct instrument worker.
 
 For performance comparison:
 

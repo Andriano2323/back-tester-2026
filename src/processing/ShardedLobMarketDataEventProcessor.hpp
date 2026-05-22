@@ -69,6 +69,9 @@ private:
         std::size_t depth
     );
     [[nodiscard]] std::size_t totalUnresolvedEvents();
+    [[nodiscard]] std::size_t totalUnknownModifyRecoveredAsAddCount();
+    [[nodiscard]] std::size_t totalUnknownModifySkippedCount();
+    [[nodiscard]] std::size_t totalUnknownCancelSkippedCount();
 
     std::ostream& out_;
     LobProcessorConfig config_;

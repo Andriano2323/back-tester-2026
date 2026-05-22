@@ -276,7 +276,10 @@ void ShardedLobMarketDataEventProcessor::printFinalSummary(std::ostream& out) {
         << "worker_count=" << workerCount() << '\n'
         << "instrument_count=" << snapshot.instruments.size() << '\n'
         << "processed_events=" << processed_count_ << '\n'
-        << "unresolved_events=" << snapshot.unresolved_events << '\n';
+        << "unresolved_events=" << snapshot.unresolved_events << '\n'
+        << "unknown_modify_recovered_as_add_count=" << totalUnknownModifyRecoveredAsAddCount() << '\n'
+        << "unknown_modify_skipped_count=" << totalUnknownModifySkippedCount() << '\n'
+        << "unknown_cancel_skipped_count=" << totalUnknownCancelSkippedCount() << '\n';
 
     for (const auto& instrument : snapshot.instruments) {
         out << "instrument_id=" << instrument.instrument_id
@@ -430,6 +433,36 @@ std::size_t ShardedLobMarketDataEventProcessor::totalUnresolvedEvents() {
     std::size_t total = router_unresolved_events_;
     for (const auto& worker : workers_) {
         total += worker->books().unresolvedEvents();
+    }
+    return total;
+}
+
+std::size_t ShardedLobMarketDataEventProcessor::totalUnknownModifyRecoveredAsAddCount() {
+    drainWorkers();
+
+    std::size_t total = 0;
+    for (const auto& worker : workers_) {
+        total += worker->books().unknownModifyRecoveredAsAddCount();
+    }
+    return total;
+}
+
+std::size_t ShardedLobMarketDataEventProcessor::totalUnknownModifySkippedCount() {
+    drainWorkers();
+
+    std::size_t total = 0;
+    for (const auto& worker : workers_) {
+        total += worker->books().unknownModifySkippedCount();
+    }
+    return total;
+}
+
+std::size_t ShardedLobMarketDataEventProcessor::totalUnknownCancelSkippedCount() {
+    drainWorkers();
+
+    std::size_t total = 0;
+    for (const auto& worker : workers_) {
+        total += worker->books().unknownCancelSkippedCount();
     }
     return total;
 }

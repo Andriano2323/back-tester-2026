@@ -22,6 +22,9 @@ public:
     [[nodiscard]] std::size_t instrumentCount() const noexcept;
     [[nodiscard]] std::size_t processedEvents() const noexcept;
     [[nodiscard]] std::size_t unresolvedEvents() const noexcept;
+    [[nodiscard]] std::size_t unknownModifyRecoveredAsAddCount() const noexcept;
+    [[nodiscard]] std::size_t unknownModifySkippedCount() const noexcept;
+    [[nodiscard]] std::size_t unknownCancelSkippedCount() const noexcept;
     [[nodiscard]] std::string stableStateDigest() const;
     [[nodiscard]] BookManagerSnapshot snapshot(
         std::size_t event_count,

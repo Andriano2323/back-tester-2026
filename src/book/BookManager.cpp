@@ -104,6 +104,33 @@ std::size_t BookManager::unresolvedEvents() const noexcept {
     return unresolved_events_;
 }
 
+std::size_t BookManager::unknownModifyRecoveredAsAddCount() const noexcept {
+    std::size_t total = 0;
+    for (const auto& [instrument_id, book] : books_by_instrument_) {
+        (void)instrument_id;
+        total += book.unknownModifyRecoveredAsAddCount();
+    }
+    return total;
+}
+
+std::size_t BookManager::unknownModifySkippedCount() const noexcept {
+    std::size_t total = 0;
+    for (const auto& [instrument_id, book] : books_by_instrument_) {
+        (void)instrument_id;
+        total += book.unknownModifySkippedCount();
+    }
+    return total;
+}
+
+std::size_t BookManager::unknownCancelSkippedCount() const noexcept {
+    std::size_t total = 0;
+    for (const auto& [instrument_id, book] : books_by_instrument_) {
+        (void)instrument_id;
+        total += book.unknownCancelSkippedCount();
+    }
+    return total;
+}
+
 void BookManager::printSnapshot(std::ostream& out, std::size_t depth) const {
     out << "BookManager snapshot"
         << " instruments=" << instrumentCount()
@@ -130,7 +157,7 @@ std::string BookManager::stableStateDigest() const {
 
         out << ",bids=[";
         bool first = true;
-        for (const auto& [price, volume] : book.bidLevels()) {
+        for (const auto& [price, volume] : book.bidLevelsView()) {
             if (!first) {
                 out << ';';
             }
@@ -141,7 +168,7 @@ std::string BookManager::stableStateDigest() const {
 
         out << ",asks=[";
         first = true;
-        for (const auto& [price, volume] : book.askLevels()) {
+        for (const auto& [price, volume] : book.askLevelsView()) {
             if (!first) {
                 out << ';';
             }
@@ -184,7 +211,10 @@ BookManagerSnapshot BookManager::snapshot(
 void BookManager::printFinalBestBidAsk(std::ostream& out) const {
     out << "instrument_count=" << instrumentCount() << '\n'
         << "processed_events=" << processed_events_ << '\n'
-        << "unresolved_events=" << unresolved_events_ << '\n';
+        << "unresolved_events=" << unresolved_events_ << '\n'
+        << "unknown_modify_recovered_as_add_count=" << unknownModifyRecoveredAsAddCount() << '\n'
+        << "unknown_modify_skipped_count=" << unknownModifySkippedCount() << '\n'
+        << "unknown_cancel_skipped_count=" << unknownCancelSkippedCount() << '\n';
     for (const auto instrument_id : sortedInstrumentIds(books_by_instrument_)) {
         const auto& book = books_by_instrument_.at(instrument_id);
         out << "instrument_id=" << instrument_id

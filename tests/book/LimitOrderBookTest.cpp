@@ -76,6 +76,19 @@ MarketDataEvent fill(std::uint64_t order_id, std::uint64_t size) {
     return event;
 }
 
+void attachDiagnosticMetadata(
+    MarketDataEvent& event,
+    std::uint64_t timestamp,
+    std::uint32_t source_file_id,
+    std::uint64_t source_sequence,
+    std::size_t line_number
+) {
+    event.timestamp = timestamp;
+    event.source_file_id = source_file_id;
+    event.source_sequence = source_sequence;
+    event.line_number = line_number;
+}
+
 } // namespace
 
 void testLimitOrderBookStartsEmpty() {
@@ -87,6 +100,10 @@ void testLimitOrderBookStartsEmpty() {
     require(book.volumeAt(Side::Ask, P(100)) == 0, "new book has no ask volume");
     require(book.restingOrderCount() == 0, "new book has no resting orders");
     require(book.skippedUnknownOrderCount() == 0, "new book has no skipped unknown orders");
+    require(book.unknownModifyRecoveredAsAddCount() == 0, "new book has no recovered unknown modifies");
+    require(book.unknownModifySkippedCount() == 0, "new book has no skipped unknown modifies");
+    require(book.unknownCancelSkippedCount() == 0, "new book has no skipped unknown cancels");
+    require(book.unknownOrderDiagnostics().empty(), "new book has no unknown order diagnostics");
     require(book.tradeCount() == 0, "new book has no trades");
     require(book.fillCount() == 0, "new book has no fills");
 }
@@ -220,12 +237,31 @@ void testLobCancelLargerThanRestingSizeIsCapped() {
 void testLobCancelUnknownOrderIsNoop() {
     LimitOrderBook book{42};
 
-    book.apply(cancel(999, 10));
+    auto event = cancel(999, 10);
+    attachDiagnosticMetadata(event, 123, 7, 8, 9);
+    book.apply(event);
 
     require(!book.bestBid().has_value(), "unknown cancel leaves bid side empty");
     require(!book.bestAsk().has_value(), "unknown cancel leaves ask side empty");
     require(book.restingOrderCount() == 0, "unknown cancel leaves no resting orders");
     require(book.skippedUnknownOrderCount() == 1, "unknown cancel increments skipped count");
+    require(book.unknownCancelSkippedCount() == 1, "unknown cancel increments explicit cancel skipped count");
+    require(book.unknownModifySkippedCount() == 0, "unknown cancel does not increment modify skipped count");
+    require(book.unknownModifyRecoveredAsAddCount() == 0, "unknown cancel does not increment recovered modify count");
+
+    const auto& diagnostics = book.unknownOrderDiagnostics();
+    require(diagnostics.size() == 1, "unknown cancel records one diagnostic");
+    require(diagnostics[0].operation == "cancel", "unknown cancel diagnostic operation");
+    require(diagnostics[0].decision == "skipped", "unknown cancel diagnostic decision");
+    require(diagnostics[0].timestamp == 123, "unknown cancel diagnostic timestamp");
+    require(diagnostics[0].instrument_id == 42, "unknown cancel diagnostic instrument");
+    require(diagnostics[0].order_id == 999, "unknown cancel diagnostic order id");
+    require(diagnostics[0].side == Side::None, "unknown cancel diagnostic side");
+    require(diagnostics[0].price == 0, "unknown cancel diagnostic price");
+    require(diagnostics[0].size == 10, "unknown cancel diagnostic size");
+    require(diagnostics[0].source_file_id == 7, "unknown cancel diagnostic source file");
+    require(diagnostics[0].source_sequence == 8, "unknown cancel diagnostic source sequence");
+    require(diagnostics[0].line_number == 9, "unknown cancel diagnostic line number");
 }
 
 void testLobCancelRemovesEmptyPriceLevel() {
@@ -279,12 +315,116 @@ void testLobModifySideChange() {
 void testLobModifyUnknownOrderWithFullStateBecomesAdd() {
     LimitOrderBook book{42};
 
-    book.apply(modify(1, Side::Bid, P(100), 10));
+    auto event = modify(1, Side::Bid, P(100), 10);
+    attachDiagnosticMetadata(event, 200, 2, 3, 4);
+    book.apply(event);
 
     require(book.volumeAt(Side::Bid, P(100)) == 10, "unknown full-state modify adds bid volume");
     require(book.bestBid() == P(100), "unknown full-state modify sets best bid");
     require(book.restingOrderCount() == 1, "unknown full-state modify creates resting order");
     require(book.skippedUnknownOrderCount() == 0, "unknown full-state modify is not skipped");
+    require(
+        book.unknownModifyRecoveredAsAddCount() == 1,
+        "unknown full-state modify increments recovered-as-add count"
+    );
+    require(book.unknownModifySkippedCount() == 0, "unknown full-state modify does not increment skipped modify count");
+    require(book.unknownCancelSkippedCount() == 0, "unknown full-state modify does not increment skipped cancel count");
+
+    const auto& diagnostics = book.unknownOrderDiagnostics();
+    require(diagnostics.size() == 1, "unknown full-state modify records one diagnostic");
+    require(diagnostics[0].operation == "modify", "unknown full-state modify diagnostic operation");
+    require(diagnostics[0].decision == "recovered_as_add", "unknown full-state modify diagnostic decision");
+    require(diagnostics[0].timestamp == 200, "unknown full-state modify diagnostic timestamp");
+    require(diagnostics[0].instrument_id == 42, "unknown full-state modify diagnostic instrument");
+    require(diagnostics[0].order_id == 1, "unknown full-state modify diagnostic order id");
+    require(diagnostics[0].side == Side::Bid, "unknown full-state modify diagnostic side");
+    require(diagnostics[0].price == P(100), "unknown full-state modify diagnostic price");
+    require(diagnostics[0].size == 10, "unknown full-state modify diagnostic size");
+    require(diagnostics[0].source_file_id == 2, "unknown full-state modify diagnostic source file");
+    require(diagnostics[0].source_sequence == 3, "unknown full-state modify diagnostic source sequence");
+    require(diagnostics[0].line_number == 4, "unknown full-state modify diagnostic line number");
+}
+
+void testLobModifyUnknownOrderWithoutFullStateIsSkipped() {
+    LimitOrderBook book{42};
+
+    MarketDataEvent event;
+    event.order_id = 77;
+    event.action = Action::Modify;
+    event.instrument_id = 42;
+    event.side = Side::None;
+    event.price = P(100);
+    event.size = 10;
+    attachDiagnosticMetadata(event, 300, 4, 5, 6);
+    book.apply(event);
+
+    require(!book.bestBid().has_value(), "unknown partial modify leaves bid side empty");
+    require(!book.bestAsk().has_value(), "unknown partial modify leaves ask side empty");
+    require(book.restingOrderCount() == 0, "unknown partial modify creates no resting order");
+    require(book.skippedUnknownOrderCount() == 1, "unknown partial modify increments skipped count");
+    require(book.unknownModifySkippedCount() == 1, "unknown partial modify increments explicit skipped modify count");
+    require(book.unknownModifyRecoveredAsAddCount() == 0, "unknown partial modify is not recovered");
+    require(book.unknownCancelSkippedCount() == 0, "unknown partial modify does not increment cancel skipped count");
+
+    const auto& diagnostics = book.unknownOrderDiagnostics();
+    require(diagnostics.size() == 1, "unknown partial modify records one diagnostic");
+    require(diagnostics[0].operation == "modify", "unknown partial modify diagnostic operation");
+    require(diagnostics[0].decision == "skipped", "unknown partial modify diagnostic decision");
+    require(diagnostics[0].timestamp == 300, "unknown partial modify diagnostic timestamp");
+    require(diagnostics[0].instrument_id == 42, "unknown partial modify diagnostic instrument");
+    require(diagnostics[0].order_id == 77, "unknown partial modify diagnostic order id");
+    require(diagnostics[0].side == Side::None, "unknown partial modify diagnostic side");
+    require(diagnostics[0].price == P(100), "unknown partial modify diagnostic price");
+    require(diagnostics[0].size == 10, "unknown partial modify diagnostic size");
+    require(diagnostics[0].source_file_id == 4, "unknown partial modify diagnostic source file");
+    require(diagnostics[0].source_sequence == 5, "unknown partial modify diagnostic source sequence");
+    require(diagnostics[0].line_number == 6, "unknown partial modify diagnostic line number");
+}
+
+void testLobUnknownOrderDiagnosticsAreRateLimited() {
+    LimitOrderBook book{42};
+
+    for (std::uint64_t order_id = 1; order_id <= 40; ++order_id) {
+        auto event = cancel(order_id, 1);
+        attachDiagnosticMetadata(event, order_id, 0, order_id, static_cast<std::size_t>(order_id));
+        book.apply(event);
+    }
+
+    require(book.unknownCancelSkippedCount() == 40, "unknown cancel counter is not rate limited");
+    require(book.unknownOrderDiagnostics().size() == 32, "unknown diagnostics samples are rate limited");
+    require(book.unknownOrderDiagnostics().front().order_id == 1, "diagnostic samples keep first event");
+    require(book.unknownOrderDiagnostics().back().order_id == 32, "diagnostic samples stop at sample limit");
+}
+
+void testLobBidAskViewsIterateWithoutCopy() {
+    LimitOrderBook book{42};
+
+    book.apply(add(1, Side::Bid, P(100), 10));
+    book.apply(add(2, Side::Bid, P(101), 5));
+    book.apply(add(3, Side::Ask, P(105), 7));
+    book.apply(add(4, Side::Ask, P(104), 3));
+
+    const auto& bids = book.bidLevelsView();
+    const auto& asks = book.askLevelsView();
+
+    require(&bids == &book.bidLevelsView(), "bid view returns stable internal reference");
+    require(&asks == &book.askLevelsView(), "ask view returns stable internal reference");
+    require(bids.size() == 2, "bid view sees two levels");
+    require(asks.size() == 2, "ask view sees two levels");
+
+    auto bid_it = bids.begin();
+    require(bid_it->first == P(101), "bid view iterates highest price first");
+    require(bid_it->second == 5, "bid view first level volume");
+    ++bid_it;
+    require(bid_it->first == P(100), "bid view iterates next lower price");
+    require(bid_it->second == 10, "bid view second level volume");
+
+    auto ask_it = asks.begin();
+    require(ask_it->first == P(104), "ask view iterates lowest price first");
+    require(ask_it->second == 3, "ask view first level volume");
+    ++ask_it;
+    require(ask_it->first == P(105), "ask view iterates next higher price");
+    require(ask_it->second == 7, "ask view second level volume");
 }
 
 void testLobClearEmptiesBook() {
