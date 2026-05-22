@@ -14,11 +14,12 @@ Refactor + optimization pass on the C++20 NDJSON market-data ingestion pipeline.
   - File now ~140 lines (was 273).
 
 ### I/O
-- Added `src/io/MmapFile.{hpp,cpp}` (mmap reader; `nextLine()` returns `std::string_view` over the mapped bytes; `MADV_SEQUENTIAL` + `memchr` for line scan).
-- `StandardRunner` and the producer threads in `HardRunnerSupport` now use `MmapFile` instead of `std::getline` on `std::ifstream`.
+- `StandardRunner` and the producer threads in `HardRunnerSupport` read NDJSON sequentially with buffered `std::ifstream` / `std::getline`.
+- Each reader path reuses one `std::string` line buffer and parses the line immediately as a `std::string_view`.
+- An mmap line reader was benchmarked but not kept: it helped one Standard-mode single-file measurement, but it was not a clear throughput win for hard-mode flat/hierarchy folder runs.
 
 ### Build
-- `CMakeLists.txt`: added `src/io/MmapFile.cpp` and `third_party/simdjson/simdjson.cpp` to `ingest_core`. simdjson sources are built with `-Wno-error -w` (we don't own its warnings).
+- `CMakeLists.txt`: added `third_party/simdjson/simdjson.cpp` to `ingest_core`. simdjson sources are built with `-Wno-error -w` (we don't own its warnings).
 - `target_include_directories(ingest_core PRIVATE third_party/simdjson)`.
 
 ### Merge tuning
@@ -33,10 +34,9 @@ Refactor + optimization pass on the C++20 NDJSON market-data ingestion pipeline.
 
 ## Performance
 
-Standard runner, single file. After mmap migration:
-- Total profile samples: **1432 → 528** (~2.7× faster).
-- Old hot leaves gone: `string::push_back` (450), `getline` (284), `__read_nocancel` (68).
-- New top leaf: `_platform_memchr` (~221) — expected; that's the line scanner over mmap'd bytes.
+Hard-mode folder throughput is driven primarily by merge topology. The hierarchical merge remains the main optimization because it spreads merge work across more cores than the flat single-merger pipeline.
+
+Reader follow-up: mmap was benchmarked against buffered stream line reading. It was about 21.7% faster in one Standard-mode single-file run, but stream reading was about 32.2% faster in flat mode and about 16.7% faster in hierarchy mode. Since Task 1 only needs sequential line/window reading, the simpler buffered stream implementation is kept.
 
 ## How to use
 
@@ -67,7 +67,7 @@ Shortcuts (mode as positional, then path):
 `--print-events N` caps how many parsed events the dispatcher prints (default 10). `--benchmark` forces it to 0 so timing isn't bound by stdout.
 
 ### Modes
-- **standard** — single file, single thread, `MmapFile → parse → dispatch`.
+- **standard** — single file, single thread, buffered stream read -> parse -> dispatch.
 - **flat** — folder of files; one producer thread per file feeds a batched SPSC queue, one merger thread runs a k-way min-heap merge across all queues, one dispatcher consumes the merged stream.
 - **hierarchy** — folder of files; 4-way tree of mergers (parallelizable), useful when the merger itself is the bottleneck.
 - **benchmark** — runs the hard-task pipeline silently for timing.
@@ -90,7 +90,7 @@ Open the `.json.gz` at <https://profiler.firefox.com> for the flamegraph.
 src/
   app/            CLI parsing
   domain/         MarketDataEvent + comparator
-  io/             MmapFile
+  io/             File-reading helpers
   parsing/        JsonParser (simdjson)
   processing/     IMarketDataEventProcessor + LoggingMarketDataEventProcessor
   runners/        StandardRunner, FlatMergeRunner, HierarchicalMergeRunner, HardRunnerSupport, ResultPrinter

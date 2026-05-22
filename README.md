@@ -8,6 +8,7 @@ A C++20 data-ingestion layer for an event-driven backtester. The project support
 - **Benchmark mode** runs both Hard-task strategies and reports message count, wall-clock time, and throughput.
 
 The project has no third-party runtime dependency. The parser is a small flat JSON-object parser tuned for NDJSON market-data rows, so reviewers do not need to install `nlohmann/json` or any package beyond a C++20 compiler and CMake.
+NDJSON files are read sequentially with buffered `std::ifstream` / `std::getline` line reading.
 
 ## Quick start
 
@@ -17,10 +18,10 @@ The project has no third-party runtime dependency. The parser is a small flat JS
 ./run hierarchy data/multi
 ./run benchmark data/multi
 ./run test
-./scripts/benchmark.sh
+./scripts/benchmark.sh data/daily_20
 ```
 
-The `run` script builds the project first and then executes the requested mode. `scripts/benchmark.sh` builds a release binary and benchmarks the bundled `data/daily_20` folder by default.
+The `run` script builds the project first and then executes the requested mode. `scripts/benchmark.sh <folder>` builds a release binary and benchmarks the supplied folder.
 
 ## Manual build
 
@@ -117,6 +118,8 @@ CPU / thread utilization was measured separately with `samply`, so use this tabl
 Standard mode uses one thread by design and keeps that thread saturated. Flat mode starts 22 producers, one merger, and one dispatcher; the merger/dispatcher pair dominates the sampled CPU time, leaving the single merger as the main funnel. Hierarchy mode starts the same producers plus 9 merger threads and one dispatcher, spreading work across more cores and reducing sampled wall time from about 1.26 s to 0.93 s.
 
 The remaining headroom is mostly synchronization overhead at SPSC queue boundaries, visible as `__ulock_wait` in profiling, rather than lack of available CPU cores.
+
+An mmap-based line reader was benchmarked against the current buffered stream reader. It was faster for one Standard-mode single-file run, but it was not a clear throughput win for the hard-mode folder pipelines, where stream reading was faster in both flat and hierarchy measurements. Because Task 1 only needs sequential line/window reading, the final implementation keeps the simpler buffered stream reader and treats hierarchical merging as the main optimization.
 
 ## Project structure
 

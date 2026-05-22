@@ -1,12 +1,14 @@
 #include "runners/StandardRunner.hpp"
 
-#include "io/MmapFile.hpp"
 #include "parsing/JsonParser.hpp"
 
 #include <chrono>
 #include <filesystem>
+#include <fstream>
 #include <ostream>
 #include <stdexcept>
+#include <string>
+#include <string_view>
 
 namespace md {
 
@@ -23,7 +25,10 @@ RunResult StandardRunner::run(
         throw std::runtime_error("standard mode expects a file path: " + file_path.string());
     }
 
-    MmapFile file(file_path);
+    std::ifstream file(file_path);
+    if (!file.is_open()) {
+        throw std::runtime_error("cannot open input file: " + file_path.string());
+    }
 
     RunResult result;
     result.strategy_name = "standard";
@@ -31,17 +36,18 @@ RunResult StandardRunner::run(
     if (verbose) {
         err << "selected_mode=standard\n"
             << "input_file=" << file_path.string() << '\n'
-            << "reader=mmap\n";
+            << "reader=stream\n";
     }
 
     const auto started_at = std::chrono::steady_clock::now();
 
     std::size_t line_number = 0;
-    while (auto line = file.nextLine()) {
+    std::string line;
+    while (std::getline(file, line)) {
         ++line_number;
         ++result.diagnostics.total_lines_read;
 
-        const auto event = parseMarketDataEventLine(*line, line_number);
+        const auto event = parseMarketDataEventLine(std::string_view(line), line_number);
         processor.processMarketDataEvent(event);
         result.summary.observe(event);
     }

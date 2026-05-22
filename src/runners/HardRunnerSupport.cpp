@@ -1,7 +1,6 @@
 #include "runners/HardRunnerSupport.hpp"
 
 #include "domain/MarketDataEvent.hpp"
-#include "io/MmapFile.hpp"
 #include "parsing/JsonParser.hpp"
 
 #include <filesystem>
@@ -11,6 +10,7 @@
 #include <queue>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 
 namespace md {
@@ -72,7 +72,7 @@ ProducerSet startProducerThreads(
 
     if (verbose) {
         err << "producer_threads=" << files.size() << '\n'
-            << "reader=mmap\n";
+            << "reader=stream\n";
     }
 
     ProducerSet producers;
@@ -91,14 +91,19 @@ ProducerSet startProducerThreads(
 
         producers.threads.emplace_back(
             [index, file_path, queue, diagnostics] {
-                MmapFile file{file_path};
+                std::ifstream file{file_path};
+                if (!file.is_open()) {
+                    throw std::runtime_error("cannot open input file: " + file_path.string());
+                }
+
                 std::size_t line_number = 0;
-                while (auto line = file.nextLine()) {
+                std::string line;
+                while (std::getline(file, line)) {
                     ++line_number;
                     ++diagnostics->total_lines_read;
 
                     queue->push(QueueItem::data(parseMarketDataEventLine(
-                        *line,
+                        std::string_view(line),
                         line_number,
                         static_cast<std::uint32_t>(index),
                         static_cast<std::uint64_t>(line_number)

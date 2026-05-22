@@ -13,7 +13,6 @@ option(ENABLE_COVERAGE "Build with gcov coverage instrumentation" OFF)
 set(INGEST_SOURCES
     src/app/ArgsParser.cpp
     src/domain/MarketDataEvent.cpp
-    src/io/MmapFile.cpp
     src/parsing/JsonParser.cpp
     src/processing/LoggingMarketDataEventProcessor.cpp
     src/runners/FlatMergeRunner.cpp
