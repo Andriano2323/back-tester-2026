@@ -87,11 +87,11 @@ Refactor + optimization pass on the C++20 NDJSON market-data ingestion pipeline.
   - File now ~140 lines (was 273).
 
 ### I/O
-- Added `src/io/MmapFile.{hpp,cpp}` (mmap reader; `nextLine()` returns `std::string_view` over the mapped bytes; `MADV_SEQUENTIAL` + `memchr` for line scan).
-- `StandardRunner` and the producer threads in `HardRunnerSupport` now use `MmapFile` instead of `std::getline` on `std::ifstream`.
+- JSON NDJSON reading uses buffered `std::ifstream` with one reused `std::string` and `std::getline` in `StandardRunner` and the producer threads in `HardRunnerSupport`.
+- The hard-mode producers still preserve per-file `line_number`, `source_file_id`, and `source_sequence` before publishing events to the merge queues.
 
 ### Build
-- `CMakeLists.txt`: added `src/io/MmapFile.cpp` and `third_party/simdjson/simdjson.cpp` to `ingest_core`. simdjson sources are built with `-Wno-error -w` (we don't own its warnings).
+- `CMakeLists.txt`: builds `third_party/simdjson/simdjson.cpp` into `ingest_core`; simdjson sources are built with `-Wno-error -w` (we don't own its warnings).
 - `target_include_directories(ingest_core PRIVATE third_party/simdjson)`.
 
 ### Merge tuning
@@ -106,10 +106,7 @@ Refactor + optimization pass on the C++20 NDJSON market-data ingestion pipeline.
 
 ## Performance
 
-Standard runner, single file. After mmap migration:
-- Total profile samples: **1432 → 528** (~2.7× faster).
-- Old hot leaves gone: `string::push_back` (450), `getline` (284), `__read_nocancel` (68).
-- New top leaf: `_platform_memchr` (~221) — expected; that's the line scanner over mmap'd bytes.
+Current JSON ingestion keeps the standard buffered stream reader for sequential line/window reading. The main hard-task optimization remains chronological merging across producer queues while the dispatcher preserves the final event order.
 
 ## How to use
 
@@ -141,7 +138,7 @@ Shortcuts (mode as positional, then path):
 `--print-events N` caps how many parsed events the dispatcher prints (default 10). `--benchmark` forces it to 0 so timing isn't bound by stdout. `scripts/benchmark.sh <folder>` prints both the logging benchmark and the LOB benchmark.
 
 ### Modes
-- **standard** — single file, single thread, `MmapFile → parse → dispatch`.
+- **standard** — single file, single thread, `std::getline → parse → dispatch`.
 - **flat** — folder of files; one producer thread per file feeds a batched SPSC queue, one merger thread runs a k-way min-heap merge across all queues, one dispatcher consumes the merged stream.
 - **hierarchy** — folder of files; 4-way tree of mergers (parallelizable), useful when the merger itself is the bottleneck.
 - **benchmark** — runs the hard-task pipeline silently for timing.
@@ -164,7 +161,7 @@ Open the `.json.gz` at <https://profiler.firefox.com> for the flamegraph.
 src/
   app/            CLI parsing
   domain/         MarketDataEvent + comparator
-  io/             MmapFile
+  io/             optional Feather reader
   parsing/        JsonParser (simdjson)
   processing/     IMarketDataEventProcessor + LoggingMarketDataEventProcessor
   runners/        StandardRunner, FlatMergeRunner, HierarchicalMergeRunner, HardRunnerSupport, ResultPrinter

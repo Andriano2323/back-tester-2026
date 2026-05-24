@@ -29,6 +29,8 @@ void testStandardRunner() {
     const auto verbose_result = StandardRunner{}.run(file, verbose_processor, true, verbose_err);
     require(verbose_result.summary.total_messages_processed == 2, "standard verbose processed both events");
     requireContains(verbose_err.str(), "selected_mode=standard", "standard verbose mode logged");
+    requireContains(verbose_err.str(), "reader=stream", "standard JSON reader logged");
+    require(verbose_err.str().find("reader=mmap") == std::string::npos, "standard JSON reader is not mmap");
     requireContains(verbose_err.str(), "messages_processed=2", "standard verbose count logged");
 
     std::filesystem::remove_all(dir);

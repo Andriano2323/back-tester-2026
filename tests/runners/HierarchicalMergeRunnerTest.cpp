@@ -30,6 +30,8 @@ void testHierarchicalMergeRunner() {
     requireContains(verbose_err.str(), "selected_mode=hierarchy", "hierarchy verbose mode logged");
     requireContains(verbose_err.str(), "discovered_files_count=3", "hierarchy verbose file count logged");
     requireContains(verbose_err.str(), "merge_strategy=4_way_tree", "hierarchy verbose strategy logged");
+    requireContains(verbose_err.str(), "reader=stream", "hierarchy JSON reader logged");
+    require(verbose_err.str().find("reader=mmap") == std::string::npos, "hierarchy JSON reader is not mmap");
     requireContains(verbose_err.str(), "chronological_violations=0", "hierarchy verbose violations logged");
 
     std::filesystem::remove_all(dir);

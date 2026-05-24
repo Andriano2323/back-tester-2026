@@ -30,6 +30,8 @@ void testFlatMergeRunner() {
     requireContains(verbose_err.str(), "selected_mode=flat", "flat verbose mode logged");
     requireContains(verbose_err.str(), "discovered_files_count=3", "flat verbose file count logged");
     requireContains(verbose_err.str(), "merge_strategy=single_level_k_way_heap", "flat verbose strategy logged");
+    requireContains(verbose_err.str(), "reader=stream", "flat JSON reader logged");
+    require(verbose_err.str().find("reader=mmap") == std::string::npos, "flat JSON reader is not mmap");
     requireContains(verbose_err.str(), "chronological_violations=0", "flat verbose violations logged");
 
     std::filesystem::remove_all(dir);
