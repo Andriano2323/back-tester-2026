@@ -1,5 +1,14 @@
+#include "lob/LobTypes.hpp"
+
+#include <cstdint>
 #include <exception>
 #include <iostream>
+#include <type_traits>
+
+static_assert(std::is_same_v<md::lob::InstrumentId, std::uint64_t>);
+static_assert(std::is_same_v<md::lob::EngineId, std::uint64_t>);
+static_assert(std::is_same_v<md::lob::TimestampNs, std::int64_t>);
+static_assert(std::is_same_v<md::lob::Price, std::int64_t>);
 
 namespace md::test {
 
@@ -36,6 +45,16 @@ void testLobBidAskViewsIterateWithoutCopy();
 void testLobClearEmptiesBook();
 void testLobTradeIsExplicitNoop();
 void testLobFillIsExplicitNoop();
+void testEngineViewsArePrivate();
+void testFillAtTouchConsumesOnlyPrivateLiquidity();
+void testNonCrossingLimitOrderRestsInEngineView();
+void testHistoricalLobAddModifyCancelClear();
+void testHistoricalLobTopNSnapshot();
+void testHistoricalLobProcessorBuildsBooksPerInstrument();
+void testStandardRunnerCanBuildLobSummary();
+void testFlatAndHierarchyBuildSameLobDigest();
+void testSimulatedLobMergesHistoricalAndOwnOverlayOnly();
+void testConcurrentEngineViewsNoCrashesNoLostIsolation();
 void testMarketDataEventFormattingAndOrdering();
 void testProcessingSummaryChronologicalViolations();
 void testParserValidEvent();
@@ -51,6 +70,7 @@ void testLobProcessorFinalSummaryContainsBestBidAsk();
 void testLobProcessorAsyncSnapshotsDoNotChangeFinalLobDigest();
 void testSyncAndAsyncSnapshotOutputsHaveSameSnapshotCount();
 void testArgsParserAcceptsLobFlag();
+void testArgsParserAcceptsLobSummaryFlag();
 void testArgsParserAcceptsSnapshotOptions();
 void testArgsParserRejectsSnapshotIntervalZero();
 void testArgsParserAcceptsLobWithHardModes();
@@ -131,6 +151,16 @@ int main() {
         md::test::testLobClearEmptiesBook();
         md::test::testLobTradeIsExplicitNoop();
         md::test::testLobFillIsExplicitNoop();
+        md::test::testEngineViewsArePrivate();
+        md::test::testFillAtTouchConsumesOnlyPrivateLiquidity();
+        md::test::testNonCrossingLimitOrderRestsInEngineView();
+        md::test::testHistoricalLobAddModifyCancelClear();
+        md::test::testHistoricalLobTopNSnapshot();
+        md::test::testHistoricalLobProcessorBuildsBooksPerInstrument();
+        md::test::testStandardRunnerCanBuildLobSummary();
+        md::test::testFlatAndHierarchyBuildSameLobDigest();
+        md::test::testSimulatedLobMergesHistoricalAndOwnOverlayOnly();
+        md::test::testConcurrentEngineViewsNoCrashesNoLostIsolation();
         md::test::testMarketDataEventFormattingAndOrdering();
         md::test::testProcessingSummaryChronologicalViolations();
         md::test::testParserValidEvent();
@@ -147,6 +177,7 @@ int main() {
         md::test::testSyncAndAsyncSnapshotOutputsHaveSameSnapshotCount();
         md::test::testArgsParserAllSupportedForms();
         md::test::testArgsParserAcceptsLobFlag();
+        md::test::testArgsParserAcceptsLobSummaryFlag();
         md::test::testArgsParserAcceptsSnapshotOptions();
         md::test::testArgsParserRejectsSnapshotIntervalZero();
         md::test::testArgsParserAcceptsLobWithHardModes();

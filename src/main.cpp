@@ -1,4 +1,5 @@
 #include "app/ArgsParser.hpp"
+#include "lob/HistoricalLobProcessor.hpp"
 #include "processing/LoggingMarketDataEventProcessor.hpp"
 #include "processing/LobMarketDataEventProcessor.hpp"
 #include "processing/ShardedLobMarketDataEventProcessor.hpp"
@@ -123,6 +124,14 @@ int main(int argc, char* argv[]) {
                 processor.printFinalSummary(std::cout);
                 printRunResult(result, std::cout, config.verbose, 0);
             }
+            return 0;
+        }
+
+        if (config.lob_summary) {
+            lob::HistoricalLobProcessor processor;
+            const RunResult result = runConfiguredMode(config, processor);
+            printHistoricalLobSummary(processor.store(), std::cout, config.lob_summary_depth);
+            printRunResult(result, std::cout, config.verbose, 0);
             return 0;
         }
 

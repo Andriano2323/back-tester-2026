@@ -102,6 +102,33 @@ void testArgsParserAcceptsLobFlag() {
     std::filesystem::remove_all(dir);
 }
 
+void testArgsParserAcceptsLobSummaryFlag() {
+    const auto dir = makeTempDir("args_lob_summary");
+    const auto file = dir / "sample.ndjson";
+    writeFile(file, line(1, 1) + "\n");
+
+    const auto config = parseArgs({
+        "ingest",
+        "--mode", "standard",
+        "--input", file.string(),
+        "--lob-summary",
+        "--lob-summary-depth", "2",
+    });
+
+    require(config.mode == RunMode::Standard, "lob summary keeps standard mode");
+    require(config.lob_summary, "lob summary flag parsed");
+    require(config.lob_summary_depth == 2, "lob summary depth parsed");
+    require(config.max_events_to_print == 0, "lob summary suppresses event printing");
+
+    expectArgsErrorContains(
+        {"ingest", "--mode", "standard", "--input", file.string(), "--lob-summary", "--lob"},
+        "--lob-summary cannot be combined with --lob",
+        "lob summary rejects hw2 lob processor"
+    );
+
+    std::filesystem::remove_all(dir);
+}
+
 void testArgsParserAcceptsSnapshotOptions() {
     const auto dir = makeTempDir("args_lob_options");
     const auto file = dir / "sample.ndjson";
@@ -220,6 +247,8 @@ void testUsageMentionsLobOptions() {
     const auto usage = ArgsParser::usage("ingest");
 
     requireContains(usage, "--lob", "usage mentions lob flag");
+    requireContains(usage, "--lob-summary", "usage mentions lob summary flag");
+    requireContains(usage, "--lob-summary-depth N", "usage mentions lob summary depth");
     requireContains(usage, "--snapshot-depth N", "usage mentions snapshot depth");
     requireContains(usage, "--snapshot-interval-events N", "usage mentions snapshot interval");
     requireContains(usage, "--max-snapshots N", "usage mentions max snapshots");

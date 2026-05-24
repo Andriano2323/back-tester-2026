@@ -38,6 +38,8 @@ big/
 *.sample.txt
 !tests/test_data/
 !tests/test_data/**
+!tests/data/
+!tests/data/**
 data/*.json
 data/*.jsonl
 data/*.ndjson

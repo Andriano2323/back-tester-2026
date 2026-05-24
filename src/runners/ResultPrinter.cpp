@@ -40,6 +40,14 @@ std::string digestFingerprint(std::string_view digest) {
     return out.str();
 }
 
+std::string formatOptionalLevel(const std::optional<lob::BookLevel>& level) {
+    if (!level.has_value()) {
+        return "<none>";
+    }
+
+    return formatPrice(level->price) + "x" + std::to_string(level->size);
+}
+
 } // namespace
 
 void printRunResult(const RunResult& result, std::ostream& out, bool verbose, std::size_t max_events_to_print) {
@@ -76,6 +84,27 @@ void printRunResult(const RunResult& result, std::ostream& out, bool verbose, st
         out << "Diagnostics\n"
             << "total_lines_read=" << result.diagnostics.total_lines_read << '\n';
     }
+}
+
+void printHistoricalLobSummary(const lob::HistoricalLobStore& store, std::ostream& out, std::size_t depth) {
+    out << "LOB Summary\n"
+        << "instruments=" << store.instrumentCount() << '\n'
+        << "resting_orders=" << store.totalRestingOrderCount() << '\n';
+
+    for (const auto instrument_id : store.instrumentIds()) {
+        const auto snapshot = store.snapshot(instrument_id, depth);
+        const auto best_bid = store.bestBid(instrument_id);
+        const auto best_ask = store.bestAsk(instrument_id);
+
+        out << "instrument_id=" << instrument_id
+            << " resting_orders=" << store.bookSnapshot(instrument_id).restingOrderCount()
+            << " best_bid=" << formatOptionalLevel(best_bid)
+            << " best_ask=" << formatOptionalLevel(best_ask)
+            << " bid_levels=" << snapshot.bids.size()
+            << " ask_levels=" << snapshot.asks.size() << '\n';
+    }
+
+    out << "lob_digest=" << store.stableStateDigest() << '\n';
 }
 
 void printBenchmarkResults(const std::vector<BenchmarkResult>& results, std::ostream& out) {

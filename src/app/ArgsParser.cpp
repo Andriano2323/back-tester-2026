@@ -159,6 +159,12 @@ AppConfig ArgsParser::parse(int argc, char* argv[]) {
             continue;
         }
 
+        if (arg == "--lob-summary") {
+            config.lob_summary = true;
+            config.max_events_to_print = 0;
+            continue;
+        }
+
         if (arg == "--async-snapshots") {
             config.snapshot_writer_mode = SnapshotWriterMode::Async;
             continue;
@@ -214,6 +220,14 @@ AppConfig ArgsParser::parse(int argc, char* argv[]) {
                 throw ArgsError("--snapshot-depth requires a number");
             }
             config.snapshot_depth = parseSize(args[++i], "--snapshot-depth");
+            continue;
+        }
+
+        if (arg == "--lob-summary-depth") {
+            if (i + 1 >= args.size()) {
+                throw ArgsError("--lob-summary-depth requires a number");
+            }
+            config.lob_summary_depth = parseSize(args[++i], "--lob-summary-depth");
             continue;
         }
 
@@ -285,6 +299,10 @@ AppConfig ArgsParser::parse(int argc, char* argv[]) {
         config.max_events_to_print = 0;
     }
 
+    if (config.lob_summary && config.use_lob_processor) {
+        throw ArgsError("--lob-summary cannot be combined with --lob");
+    }
+
     validateInput(config);
     return config;
 }
@@ -293,9 +311,9 @@ std::string ArgsParser::usage(const std::string& executable_name) {
     std::ostringstream oss;
     oss << "Usage:\n"
         << "  " << executable_name << " <path_to_single_ndjson_file>\n"
-        << "  " << executable_name << " --mode standard --input <path_to_single_ndjson_file> [--verbose] [--print-events N] [--lob] [--lob-workers N] [--snapshot-depth N] [--snapshot-interval-events N] [--max-snapshots N] [--snapshot-writer sync|async] [--async-snapshots] [--snapshot-output PATH]\n"
-        << "  " << executable_name << " --mode flat --input <path_to_folder> [--input-format json|feather] [--verbose] [--print-events N] [--lob] [--lob-workers N] [--snapshot-depth N] [--snapshot-interval-events N] [--max-snapshots N] [--snapshot-writer sync|async] [--async-snapshots] [--snapshot-output PATH]\n"
-        << "  " << executable_name << " --mode hierarchy --input <path_to_folder> [--input-format json|feather] [--verbose] [--print-events N] [--lob] [--lob-workers N] [--snapshot-depth N] [--snapshot-interval-events N] [--max-snapshots N] [--snapshot-writer sync|async] [--async-snapshots] [--snapshot-output PATH]\n"
+        << "  " << executable_name << " --mode standard --input <path_to_single_ndjson_file> [--verbose] [--print-events N] [--lob-summary] [--lob-summary-depth N] [--lob] [--lob-workers N] [--snapshot-depth N] [--snapshot-interval-events N] [--max-snapshots N] [--snapshot-writer sync|async] [--async-snapshots] [--snapshot-output PATH]\n"
+        << "  " << executable_name << " --mode flat --input <path_to_folder> [--input-format json|feather] [--verbose] [--print-events N] [--lob-summary] [--lob-summary-depth N] [--lob] [--lob-workers N] [--snapshot-depth N] [--snapshot-interval-events N] [--max-snapshots N] [--snapshot-writer sync|async] [--async-snapshots] [--snapshot-output PATH]\n"
+        << "  " << executable_name << " --mode hierarchy --input <path_to_folder> [--input-format json|feather] [--verbose] [--print-events N] [--lob-summary] [--lob-summary-depth N] [--lob] [--lob-workers N] [--snapshot-depth N] [--snapshot-interval-events N] [--max-snapshots N] [--snapshot-writer sync|async] [--async-snapshots] [--snapshot-output PATH]\n"
         << "  " << executable_name << " --benchmark <path_to_folder> [--input-format json|feather] [--lob] [--lob-workers N]\n"
         << "\nShortcuts:\n"
         << "  " << executable_name << " standard <path_to_single_ndjson_file>\n"

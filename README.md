@@ -22,6 +22,8 @@ The default JSON build has no third-party runtime dependency. The parser is a sm
 
 The `run` script builds the project first and then executes the requested mode. `scripts/benchmark.sh <folder>` builds a release binary and prints report-ready logging and LOB benchmark blocks for that folder.
 
+HW3 multi-engine LOB simulation architecture and demo commands are documented in [`docs/HW3_GROUP3.md`](docs/HW3_GROUP3.md).
+
 ## Manual build
 
 ```bash
@@ -53,6 +55,9 @@ Optional flags:
 ```bash
 --verbose          Print parser diagnostics to stderr/stdout diagnostics section.
 --print-events N   Print the first N events observed by processMarketDataEvent.
+--lob-summary      Build the HW3 historical LOB processor and print the final book summary.
+--lob-summary-depth N
+                   Print N price levels per side in the HW3 LOB summary.
 --lob              Reconstruct per-instrument LOBs in standard, flat, hierarchy, or benchmark mode.
 --lob-workers N    Use N sharded LOB workers; default 1 keeps the dispatcher-owned sequential BookManager.
 --snapshot-depth N Print N price levels per side in each LOB snapshot.

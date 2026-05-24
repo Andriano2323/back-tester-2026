@@ -29,6 +29,8 @@ struct AppConfig {
     SnapshotWriterMode snapshot_writer_mode{SnapshotWriterMode::Sync};
     std::filesystem::path snapshot_output_path;
     std::size_t lob_workers{1};
+    bool lob_summary{false};
+    std::size_t lob_summary_depth{5};
 };
 
 } // namespace md

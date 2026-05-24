@@ -17,6 +17,12 @@ set(INGEST_SOURCES
     src/book/LimitOrderBook.cpp
     src/domain/MarketDataEvent.cpp
     src/io/MmapFile.cpp
+    src/lob/EngineView.cpp
+    src/lob/FillSimulator.cpp
+    src/lob/HistoricalLOB.cpp
+    src/lob/HistoricalLobProcessor.cpp
+    src/lob/HistoricalLobStore.cpp
+    src/lob/SimulatedLOB.cpp
     src/parsing/JsonParser.cpp
     src/processing/AsyncSnapshotWriter.cpp
     src/processing/LoggingMarketDataEventProcessor.cpp
@@ -39,6 +45,13 @@ set(INGEST_TEST_SOURCES
     tests/book/LimitOrderBookTest.cpp
     tests/concurrency/NonBlockingQueueTest.cpp
     tests/domain/MarketDataEventTest.cpp
+    tests/lob/EngineViewTest.cpp
+    tests/lob/FillSimulatorTest.cpp
+    tests/lob/HistoricalLOBTest.cpp
+    tests/lob/HistoricalLobProcessorTest.cpp
+    tests/lob/LobSummaryIntegrationTest.cpp
+    tests/lob/SimulatedLOBTest.cpp
+    tests/lob/ThreadSafetyTest.cpp
     tests/parsing/JsonParserTest.cpp
     tests/processing/AsyncSnapshotWriterTest.cpp
     tests/processing/LobMarketDataEventProcessorTest.cpp
