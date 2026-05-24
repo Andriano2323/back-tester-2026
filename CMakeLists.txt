@@ -16,7 +16,6 @@ set(INGEST_SOURCES
     src/book/BookManager.cpp
     src/book/LimitOrderBook.cpp
     src/domain/MarketDataEvent.cpp
-    src/io/MmapFile.cpp
     src/parsing/JsonParser.cpp
     src/processing/AsyncSnapshotWriter.cpp
     src/processing/LoggingMarketDataEventProcessor.cpp

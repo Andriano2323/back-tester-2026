@@ -7,7 +7,7 @@ A C++20 data-ingestion layer for an event-driven backtester. The project support
 - **Hierarchy mode** uses the same producers but merges streams through a binary tree of smaller mergers.
 - **Benchmark mode** runs both Hard-task strategies and reports message count, wall-clock time, and throughput. With `--lob`, it benchmarks the same merge strategies while reconstructing final LOB state.
 
-The default JSON build has no third-party runtime dependency. The parser is a small flat JSON-object parser tuned for NDJSON market-data rows, so reviewers do not need to install `nlohmann/json` or any package beyond a C++20 compiler and CMake. Arrow C++ is optional and used only when configuring with `-DENABLE_ARROW=ON`.
+The default JSON build has no third-party runtime dependency. JSON NDJSON files are read sequentially with buffered `std::ifstream` / `std::getline`, and the parser is a small flat JSON-object parser tuned for market-data rows. Reviewers do not need to install `nlohmann/json` or any package beyond a C++20 compiler and CMake. Arrow C++ is optional and used only when configuring with `-DENABLE_ARROW=ON`.
 
 ## Quick start
 
