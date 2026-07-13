@@ -615,6 +615,11 @@ The combined C++ JSON vs Feather benchmark can be produced with:
 - Evaluate a low-latency wait policy for the hottest SPSC queue boundaries.
 - Consider dispatcher parallelization only if the global ordering contract can be relaxed or partitioned safely.
 
+## Homework 4
+
+- [Group A interface contract](docs/HW4_GROUP_A_CONTRACT.md)
+- [Task A0 baseline report](docs/HW4_BASELINE.md)
+
 ## Known assumptions and limitations
 
 - Input files are NDJSON: one JSON object per line.
