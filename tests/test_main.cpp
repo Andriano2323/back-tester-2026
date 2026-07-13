@@ -1,3 +1,4 @@
+#include "domain/Types.hpp"
 #include "lob/LobTypes.hpp"
 
 #include <cstdint>
@@ -5,10 +6,14 @@
 #include <iostream>
 #include <type_traits>
 
-static_assert(std::is_same_v<md::lob::InstrumentId, std::uint64_t>);
-static_assert(std::is_same_v<md::lob::EngineId, std::uint64_t>);
-static_assert(std::is_same_v<md::lob::TimestampNs, std::int64_t>);
-static_assert(std::is_same_v<md::lob::Price, std::int64_t>);
+static_assert(std::is_same_v<md::InstrumentId, std::uint64_t>);
+static_assert(std::is_same_v<md::TradingEngineId, std::uint64_t>);
+static_assert(std::is_same_v<md::TimestampNs, std::int64_t>);
+static_assert(std::is_same_v<md::Price, std::int64_t>);
+static_assert(std::is_same_v<md::lob::InstrumentId, md::InstrumentId>);
+static_assert(std::is_same_v<md::lob::EngineId, md::TradingEngineId>);
+static_assert(std::is_same_v<md::lob::TimestampNs, md::TimestampNs>);
+static_assert(std::is_same_v<md::lob::Price, md::Price>);
 
 namespace md::test
 {
@@ -58,6 +63,8 @@ void testSimulatedLobMergesHistoricalAndOwnOverlayOnly();
 void testConcurrentEngineViewsNoCrashesNoLostIsolation();
 void testMarketDataEventFormattingAndOrdering();
 void testProcessingSummaryChronologicalViolations();
+void testCanonicalDomainTypes();
+void testCheckedTimestampAndLatencyArithmetic();
 void testParserValidEvent();
 void testParserNullAndDecimalPrices();
 void testParserTimestampFallbackAndNumericFields();
@@ -115,6 +122,7 @@ void testShardedLobFourWorkersMatchesSequentialDigest();
 void testShardedLobResolvesMissingInstrumentIdByOrderId();
 void testShardedLobPreservesPerInstrumentOrder();
 void testShardedLobUnknownOrderWithoutInstrumentGoesToUnresolvedCounter();
+void testTradingEngineConfigValidation();
 
 } // namespace md::test
 
@@ -166,6 +174,8 @@ int main()
         md::test::testConcurrentEngineViewsNoCrashesNoLostIsolation();
         md::test::testMarketDataEventFormattingAndOrdering();
         md::test::testProcessingSummaryChronologicalViolations();
+        md::test::testCanonicalDomainTypes();
+        md::test::testCheckedTimestampAndLatencyArithmetic();
         md::test::testParserValidEvent();
         md::test::testParserNullAndDecimalPrices();
         md::test::testParserTimestampFallbackAndNumericFields();
@@ -224,6 +234,7 @@ int main()
         md::test::testShardedLobResolvesMissingInstrumentIdByOrderId();
         md::test::testShardedLobPreservesPerInstrumentOrder();
         md::test::testShardedLobUnknownOrderWithoutInstrumentGoesToUnresolvedCounter();
+        md::test::testTradingEngineConfigValidation();
     }
     catch (const std::exception& e)
     {

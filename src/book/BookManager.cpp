@@ -17,9 +17,9 @@ bool hasValidSide(Side side)
     return side == Side::Bid || side == Side::Ask;
 }
 
-bool hasValidPrice(std::int64_t price)
+bool hasValidPrice(Price price)
 {
-    return price != std::numeric_limits<std::int64_t>::max();
+    return price != std::numeric_limits<Price>::max();
 }
 
 bool hasValidRestingState(const MarketDataEvent& event)
@@ -27,10 +27,10 @@ bool hasValidRestingState(const MarketDataEvent& event)
     return event.order_id != 0 && hasValidSide(event.side) && hasValidPrice(event.price) && event.size > 0;
 }
 
-std::vector<std::uint64_t> sortedInstrumentIds(
-    const std::unordered_map<std::uint64_t, LimitOrderBook>& books)
+std::vector<InstrumentId> sortedInstrumentIds(
+    const std::unordered_map<InstrumentId, LimitOrderBook>& books)
 {
-    std::vector<std::uint64_t> ids;
+    std::vector<InstrumentId> ids;
     ids.reserve(books.size());
     for (const auto& [instrument_id, book] : books)
     {
@@ -41,13 +41,13 @@ std::vector<std::uint64_t> sortedInstrumentIds(
     return ids;
 }
 
-std::string formatOptionalPrice(std::optional<std::int64_t> price)
+std::string formatOptionalPrice(std::optional<Price> price)
 {
     return price.has_value() ? formatPrice(*price) : "<none>";
 }
 
 std::vector<PriceLevelSnapshot> makeLevelSnapshots(
-    const std::vector<std::pair<std::int64_t, std::uint64_t>>& levels)
+    const std::vector<std::pair<Price, Quantity>>& levels)
 {
     std::vector<PriceLevelSnapshot> snapshots;
     snapshots.reserve(levels.size());
@@ -84,7 +84,7 @@ void BookManager::apply(const MarketDataEvent& event)
     updateOrderMapping(routed_event, book);
 }
 
-const LimitOrderBook* BookManager::findBook(std::uint64_t instrument_id) const
+const LimitOrderBook* BookManager::findBook(InstrumentId instrument_id) const
 {
     const auto it = books_by_instrument_.find(instrument_id);
     if (it == books_by_instrument_.end())
@@ -95,7 +95,7 @@ const LimitOrderBook* BookManager::findBook(std::uint64_t instrument_id) const
     return &it->second;
 }
 
-LimitOrderBook& BookManager::getOrCreateBook(std::uint64_t instrument_id)
+LimitOrderBook& BookManager::getOrCreateBook(InstrumentId instrument_id)
 {
     auto [it, inserted] = books_by_instrument_.try_emplace(instrument_id, instrument_id);
     (void)inserted;
@@ -210,7 +210,7 @@ std::string BookManager::stableStateDigest() const
 
 BookManagerSnapshot BookManager::snapshot(
     std::size_t event_count,
-    std::uint64_t timestamp,
+    RawTimestampNs timestamp,
     std::size_t depth) const
 {
     BookManagerSnapshot snapshot;
@@ -254,7 +254,7 @@ void BookManager::printFinalBestBidAsk(std::ostream& out) const
     }
 }
 
-std::uint64_t BookManager::resolveInstrumentId(const MarketDataEvent& event) const
+InstrumentId BookManager::resolveInstrumentId(const MarketDataEvent& event) const
 {
     if (event.instrument_id != 0)
     {
@@ -310,7 +310,7 @@ void BookManager::updateOrderMapping(const MarketDataEvent& event, const LimitOr
     }
 }
 
-void BookManager::eraseOrderMappingIfMatches(std::uint64_t order_id, std::uint64_t instrument_id)
+void BookManager::eraseOrderMappingIfMatches(HistoricalOrderId order_id, InstrumentId instrument_id)
 {
     const auto it = order_to_instrument_.find(order_id);
     if (it != order_to_instrument_.end() && it->second == instrument_id)
@@ -319,7 +319,7 @@ void BookManager::eraseOrderMappingIfMatches(std::uint64_t order_id, std::uint64
     }
 }
 
-void BookManager::eraseOrderMappingsForInstrument(std::uint64_t instrument_id)
+void BookManager::eraseOrderMappingsForInstrument(InstrumentId instrument_id)
 {
     for (auto it = order_to_instrument_.begin(); it != order_to_instrument_.end();)
     {
@@ -336,7 +336,7 @@ void BookManager::eraseOrderMappingsForInstrument(std::uint64_t instrument_id)
 
 void BookManager::removePreviousInstrumentMapping(
     const MarketDataEvent& event,
-    std::uint64_t target_instrument_id)
+    InstrumentId target_instrument_id)
 {
     if ((event.action != Action::Add && event.action != Action::Modify) || !hasValidRestingState(event))
     {
