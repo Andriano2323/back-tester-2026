@@ -2,11 +2,14 @@
 
 #include "book/BookManager.hpp"
 
-namespace md::test {
+namespace md::test
+{
 
-namespace {
+namespace
+{
 
-std::int64_t P(std::int64_t integer_price) {
+std::int64_t P(std::int64_t integer_price)
+{
     return integer_price * 1'000'000'000LL;
 }
 
@@ -16,8 +19,8 @@ MarketDataEvent event(
     std::uint64_t order_id,
     Side side,
     std::int64_t price,
-    std::uint64_t size
-) {
+    std::uint64_t size)
+{
     MarketDataEvent result;
     result.action = action;
     result.instrument_id = instrument_id;
@@ -33,12 +36,13 @@ MarketDataEvent add(
     std::uint64_t order_id,
     Side side,
     std::int64_t price,
-    std::uint64_t size
-) {
+    std::uint64_t size)
+{
     return event(Action::Add, instrument_id, order_id, side, price, size);
 }
 
-MarketDataEvent cancel(std::uint64_t instrument_id, std::uint64_t order_id, std::uint64_t size) {
+MarketDataEvent cancel(std::uint64_t instrument_id, std::uint64_t order_id, std::uint64_t size)
+{
     return event(Action::Cancel, instrument_id, order_id, Side::None, 0, size);
 }
 
@@ -47,18 +51,20 @@ MarketDataEvent modify(
     std::uint64_t order_id,
     Side side,
     std::int64_t price,
-    std::uint64_t size
-) {
+    std::uint64_t size)
+{
     return event(Action::Modify, instrument_id, order_id, side, price, size);
 }
 
-MarketDataEvent clearEvent(std::uint64_t instrument_id) {
+MarketDataEvent clearEvent(std::uint64_t instrument_id)
+{
     return event(Action::Clear, instrument_id, 0, Side::None, 0, 0);
 }
 
 } // namespace
 
-void testBookManagerCreatesSeparateBooksPerInstrument() {
+void testBookManagerCreatesSeparateBooksPerInstrument()
+{
     BookManager manager;
 
     manager.apply(add(1, 10, Side::Bid, P(100), 10));
@@ -76,7 +82,8 @@ void testBookManagerCreatesSeparateBooksPerInstrument() {
     require(manager.processedEvents() == 2, "manager processed two events");
 }
 
-void testBookManagerRoutesCancelByExplicitInstrumentId() {
+void testBookManagerRoutesCancelByExplicitInstrumentId()
+{
     BookManager manager;
 
     manager.apply(add(1, 42, Side::Bid, P(100), 10));
@@ -89,7 +96,8 @@ void testBookManagerRoutesCancelByExplicitInstrumentId() {
     require(manager.unresolvedEvents() == 0, "explicit cancel is resolved");
 }
 
-void testBookManagerResolvesCancelByOrderIdWhenInstrumentMissing() {
+void testBookManagerResolvesCancelByOrderIdWhenInstrumentMissing()
+{
     BookManager manager;
 
     manager.apply(add(1, 42, Side::Bid, P(100), 10));
@@ -102,7 +110,8 @@ void testBookManagerResolvesCancelByOrderIdWhenInstrumentMissing() {
     require(manager.unresolvedEvents() == 0, "missing-instrument cancel is resolved");
 }
 
-void testBookManagerResolvesModifyByOrderIdWhenInstrumentMissing() {
+void testBookManagerResolvesModifyByOrderIdWhenInstrumentMissing()
+{
     BookManager manager;
 
     manager.apply(add(1, 42, Side::Bid, P(100), 10));
@@ -116,7 +125,8 @@ void testBookManagerResolvesModifyByOrderIdWhenInstrumentMissing() {
     require(manager.unresolvedEvents() == 0, "missing-instrument modify is resolved");
 }
 
-void testBookManagerClearRemovesOrderMappingsForInstrument() {
+void testBookManagerClearRemovesOrderMappingsForInstrument()
+{
     BookManager manager;
 
     manager.apply(add(1, 42, Side::Bid, P(100), 10));
@@ -130,7 +140,8 @@ void testBookManagerClearRemovesOrderMappingsForInstrument() {
     require(manager.unresolvedEvents() == 1, "post-clear missing-instrument cancel is unresolved");
 }
 
-void testBookManagerUnknownOrderWithoutInstrumentIsUnresolved() {
+void testBookManagerUnknownOrderWithoutInstrumentIsUnresolved()
+{
     BookManager manager;
 
     manager.apply(cancel(0, 999, 1));

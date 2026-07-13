@@ -5,11 +5,14 @@
 #include <sstream>
 #include <string>
 
-namespace md::test {
+namespace md::test
+{
 
-namespace {
+namespace
+{
 
-std::int64_t P(std::int64_t integer_price) {
+std::int64_t P(std::int64_t integer_price)
+{
     return integer_price * 1'000'000'000LL;
 }
 
@@ -19,8 +22,8 @@ MarketDataEvent event(
     std::uint64_t order_id,
     Side side,
     std::int64_t price,
-    std::uint64_t size
-) {
+    std::uint64_t size)
+{
     MarketDataEvent result;
     result.action = action;
     result.instrument_id = instrument_id;
@@ -36,8 +39,8 @@ MarketDataEvent add(
     std::uint64_t order_id,
     Side side,
     std::int64_t price,
-    std::uint64_t size
-) {
+    std::uint64_t size)
+{
     return event(Action::Add, instrument_id, order_id, side, price, size);
 }
 
@@ -46,15 +49,17 @@ MarketDataEvent modify(
     std::uint64_t order_id,
     Side side,
     std::int64_t price,
-    std::uint64_t size
-) {
+    std::uint64_t size)
+{
     return event(Action::Modify, instrument_id, order_id, side, price, size);
 }
 
-std::size_t occurrenceCount(const std::string& text, const std::string& needle) {
+std::size_t occurrenceCount(const std::string& text, const std::string& needle)
+{
     std::size_t count = 0;
     std::size_t pos = 0;
-    while ((pos = text.find(needle, pos)) != std::string::npos) {
+    while ((pos = text.find(needle, pos)) != std::string::npos)
+    {
         ++count;
         pos += needle.size();
     }
@@ -63,7 +68,8 @@ std::size_t occurrenceCount(const std::string& text, const std::string& needle) 
 
 } // namespace
 
-void testLobProcessorUpdatesBooks() {
+void testLobProcessorUpdatesBooks()
+{
     std::ostringstream out;
     LobMarketDataEventProcessor processor{out};
 
@@ -82,7 +88,8 @@ void testLobProcessorUpdatesBooks() {
     require(book->volumeAt(Side::Ask, P(105)) == 7, "lob processor ask volume");
 }
 
-void testLobProcessorPrintsSnapshotsAtInterval() {
+void testLobProcessorPrintsSnapshotsAtInterval()
+{
     std::ostringstream out;
     LobProcessorConfig config;
     config.snapshot_interval_events = 2;
@@ -103,14 +110,16 @@ void testLobProcessorPrintsSnapshotsAtInterval() {
     require(text.find("event_count=3") == std::string::npos, "snapshot not emitted at event 3");
 }
 
-void testLobProcessorRespectsMaxSnapshots() {
+void testLobProcessorRespectsMaxSnapshots()
+{
     std::ostringstream out;
     LobProcessorConfig config;
     config.snapshot_interval_events = 1;
     config.max_snapshots = 2;
     LobMarketDataEventProcessor processor{out, config};
 
-    for (std::uint64_t i = 1; i <= 5; ++i) {
+    for (std::uint64_t i = 1; i <= 5; ++i)
+    {
         processor.processMarketDataEvent(add(1, i, Side::Bid, P(100), 10));
     }
 
@@ -118,7 +127,8 @@ void testLobProcessorRespectsMaxSnapshots() {
     require(processor.snapshotCount() == 2, "processor snapshot count");
 }
 
-void testLobProcessorFinalSummaryContainsBestBidAsk() {
+void testLobProcessorFinalSummaryContainsBestBidAsk()
+{
     std::ostringstream out;
     LobMarketDataEventProcessor processor{out};
 
@@ -142,7 +152,8 @@ void testLobProcessorFinalSummaryContainsBestBidAsk() {
     requireContains(text, "best_ask=<none>", "final summary second missing best ask");
 }
 
-void testLobProcessorAsyncSnapshotsDoNotChangeFinalLobDigest() {
+void testLobProcessorAsyncSnapshotsDoNotChangeFinalLobDigest()
+{
     LobProcessorConfig sync_config;
     sync_config.snapshot_interval_events = 2;
     sync_config.max_snapshots = 2;
@@ -164,7 +175,8 @@ void testLobProcessorAsyncSnapshotsDoNotChangeFinalLobDigest() {
         add(2, 3, Side::Bid, P(200), 20),
     };
 
-    for (const auto& item : events) {
+    for (const auto& item : events)
+    {
         sync_processor.processMarketDataEvent(item);
         async_processor.processMarketDataEvent(item);
     }
@@ -174,14 +186,14 @@ void testLobProcessorAsyncSnapshotsDoNotChangeFinalLobDigest() {
 
     require(
         sync_processor.books().stableStateDigest() == async_processor.books().stableStateDigest(),
-        "async snapshots do not change final LOB digest"
-    );
+        "async snapshots do not change final LOB digest");
     require(sync_processor.processedCount() == 4, "sync processor processed count");
     require(async_processor.processedCount() == 4, "async processor processed count");
     require(async_processor.snapshotWrittenCount() == 2, "async processor written snapshot count");
 }
 
-void testSyncAndAsyncSnapshotOutputsHaveSameSnapshotCount() {
+void testSyncAndAsyncSnapshotOutputsHaveSameSnapshotCount()
+{
     LobProcessorConfig sync_config;
     sync_config.snapshot_interval_events = 2;
     sync_config.max_snapshots = 2;
@@ -196,7 +208,8 @@ void testSyncAndAsyncSnapshotOutputsHaveSameSnapshotCount() {
     std::ostringstream async_out;
     LobMarketDataEventProcessor async_processor{async_out, async_config};
 
-    for (std::uint64_t i = 1; i <= 5; ++i) {
+    for (std::uint64_t i = 1; i <= 5; ++i)
+    {
         const auto item = add(1, i, Side::Bid, P(100 + static_cast<std::int64_t>(i)), 10);
         sync_processor.processMarketDataEvent(item);
         async_processor.processMarketDataEvent(item);
@@ -207,8 +220,7 @@ void testSyncAndAsyncSnapshotOutputsHaveSameSnapshotCount() {
 
     require(
         occurrenceCount(sync_out.str(), "LOB Snapshot") == occurrenceCount(async_out.str(), "LOB Snapshot"),
-        "sync and async snapshot outputs have same snapshot count"
-    );
+        "sync and async snapshot outputs have same snapshot count");
     require(occurrenceCount(async_out.str(), "LOB Snapshot") == 2, "async snapshot output count");
 }
 

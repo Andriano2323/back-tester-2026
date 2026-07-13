@@ -6,16 +6,18 @@
 #include <string>
 #include <vector>
 
-namespace md::test {
-namespace {
+namespace md::test
+{
+namespace
+{
 
 MarketDataEvent event(
     Action action,
     std::uint64_t order_id,
     Side side,
     md::lob::Price price,
-    md::lob::Quantity quantity
-) {
+    md::lob::Quantity quantity)
+{
     MarketDataEvent market_event;
     market_event.order_id = order_id;
     market_event.side = side;
@@ -30,8 +32,8 @@ MarketDataEvent add(
     std::uint64_t order_id,
     Side side,
     md::lob::Price price,
-    md::lob::Quantity quantity
-) {
+    md::lob::Quantity quantity)
+{
     return event(Action::Add, order_id, side, price, quantity);
 }
 
@@ -39,16 +41,18 @@ MarketDataEvent modify(
     std::uint64_t order_id,
     Side side,
     md::lob::Price price,
-    md::lob::Quantity quantity
-) {
+    md::lob::Quantity quantity)
+{
     return event(Action::Modify, order_id, side, price, quantity);
 }
 
-MarketDataEvent cancel(std::uint64_t order_id, md::lob::Quantity quantity) {
+MarketDataEvent cancel(std::uint64_t order_id, md::lob::Quantity quantity)
+{
     return event(Action::Cancel, order_id, Side::None, 0, quantity);
 }
 
-MarketDataEvent clear() {
+MarketDataEvent clear()
+{
     return event(Action::Clear, 0, Side::None, 0, 0);
 }
 
@@ -56,8 +60,8 @@ void requireLevel(
     const std::optional<md::lob::BookLevel>& level,
     md::lob::Price price,
     md::lob::Quantity quantity,
-    const std::string& message
-) {
+    const std::string& message)
+{
     require(level.has_value(), message + ": missing level");
     require(level->price == price, message + ": unexpected price");
     require(level->size == quantity, message + ": unexpected size");
@@ -65,10 +69,12 @@ void requireLevel(
 
 md::lob::Quantity quantityAt(
     const std::vector<md::lob::BookLevel>& levels,
-    md::lob::Price price
-) {
-    for (const auto& level : levels) {
-        if (level.price == price) {
+    md::lob::Price price)
+{
+    for (const auto& level : levels)
+    {
+        if (level.price == price)
+        {
             return level.size;
         }
     }
@@ -78,7 +84,8 @@ md::lob::Quantity quantityAt(
 
 } // namespace
 
-void testHistoricalLobAddModifyCancelClear() {
+void testHistoricalLobAddModifyCancelClear()
+{
     md::lob::HistoricalLOB book;
 
     book.apply(add(1, Side::Bid, 100, 10));
@@ -112,7 +119,8 @@ void testHistoricalLobAddModifyCancelClear() {
     require(book.askLevelCount() == 0, "clear removes ask levels");
 }
 
-void testHistoricalLobTopNSnapshot() {
+void testHistoricalLobTopNSnapshot()
+{
     md::lob::HistoricalLOB book;
 
     book.apply(add(1, Side::Bid, 100, 10));

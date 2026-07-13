@@ -10,7 +10,8 @@ static_assert(std::is_same_v<md::lob::EngineId, std::uint64_t>);
 static_assert(std::is_same_v<md::lob::TimestampNs, std::int64_t>);
 static_assert(std::is_same_v<md::lob::Price, std::int64_t>);
 
-namespace md::test {
+namespace md::test
+{
 
 void testArgsParserAllSupportedForms();
 void testNonBlockingQueue();
@@ -117,8 +118,10 @@ void testShardedLobUnknownOrderWithoutInstrumentGoesToUnresolvedCounter();
 
 } // namespace md::test
 
-int main() {
-    try {
+int main()
+{
+    try
+    {
         md::test::testNonBlockingQueue();
         md::test::testBookManagerCreatesSeparateBooksPerInstrument();
         md::test::testBookManagerRoutesCancelByExplicitInstrumentId();
@@ -221,7 +224,9 @@ int main() {
         md::test::testShardedLobResolvesMissingInstrumentIdByOrderId();
         md::test::testShardedLobPreservesPerInstrumentOrder();
         md::test::testShardedLobUnknownOrderWithoutInstrumentGoesToUnresolvedCounter();
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e)
+    {
         std::cerr << "TEST FAILURE: " << e.what() << '\n';
         return 1;
     }

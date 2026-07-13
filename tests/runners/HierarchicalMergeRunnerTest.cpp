@@ -4,9 +4,11 @@
 
 #include <sstream>
 
-namespace md::test {
+namespace md::test
+{
 
-void testHierarchicalMergeRunner() {
+void testHierarchicalMergeRunner()
+{
     const auto dir = makeTempDir("hierarchy");
     writeMultiFileDataset(dir);
 

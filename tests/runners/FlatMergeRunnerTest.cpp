@@ -4,9 +4,11 @@
 
 #include <sstream>
 
-namespace md::test {
+namespace md::test
+{
 
-void testFlatMergeRunner() {
+void testFlatMergeRunner()
+{
     const auto dir = makeTempDir("flat");
     writeMultiFileDataset(dir);
 

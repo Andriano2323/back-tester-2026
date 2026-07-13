@@ -2,9 +2,11 @@
 
 #include "concurrency/NonBlockingQueue.hpp"
 
-namespace md::test {
+namespace md::test
+{
 
-void testNonBlockingQueue() {
+void testNonBlockingQueue()
+{
     NonBlockingQueue<int> queue(2);
 
     require(queue.size() == 0, "non-blocking queue starts empty");

@@ -4,9 +4,11 @@
 
 #include <limits>
 
-namespace md::test {
+namespace md::test
+{
 
-void testMarketDataEventFormattingAndOrdering() {
+void testMarketDataEventFormattingAndOrdering()
+{
     require(toChar(Side::Ask) == 'A', "ask side char");
     require(toChar(Side::Bid) == 'B', "bid side char");
     require(toChar(Action::Trade) == 'T', "trade action char");
@@ -33,7 +35,8 @@ void testMarketDataEventFormattingAndOrdering() {
     requireContains(formatEventFields(first), "timestamp=100", "event fields include timestamp");
 }
 
-void testProcessingSummaryChronologicalViolations() {
+void testProcessingSummaryChronologicalViolations()
+{
     ProcessingSummary summary;
 
     MarketDataEvent first;

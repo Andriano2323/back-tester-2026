@@ -4,9 +4,11 @@
 
 #include <sstream>
 
-namespace md::test {
+namespace md::test
+{
 
-void testStandardRunner() {
+void testStandardRunner()
+{
     const auto dir = makeTempDir("standard");
     const auto file = dir / "sample.ndjson";
     writeFile(file, line(100, 1) + "\n" + line(200, 2) + "\n");

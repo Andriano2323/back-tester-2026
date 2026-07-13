@@ -4,11 +4,14 @@
 
 #include <sstream>
 
-namespace md::test {
+namespace md::test
+{
 
-namespace {
+namespace
+{
 
-RunResult standardResultWithTiming() {
+RunResult standardResultWithTiming()
+{
     RunResult result;
     result.strategy_name = "standard";
     result.summary.total_messages_processed = 1000;
@@ -19,7 +22,8 @@ RunResult standardResultWithTiming() {
 
 } // namespace
 
-void testResultPrinterPrintsTimingForStandardMode() {
+void testResultPrinterPrintsTimingForStandardMode()
+{
     std::ostringstream out;
 
     printRunResult(standardResultWithTiming(), out, false, 0);
@@ -30,7 +34,8 @@ void testResultPrinterPrintsTimingForStandardMode() {
     requireContains(text, "wall_clock_seconds=0.500000", "standard timing wall clock");
 }
 
-void testResultPrinterPrintsThroughputForStandardMode() {
+void testResultPrinterPrintsThroughputForStandardMode()
+{
     std::ostringstream out;
 
     printRunResult(standardResultWithTiming(), out, false, 0);
@@ -38,8 +43,7 @@ void testResultPrinterPrintsThroughputForStandardMode() {
     requireContains(
         out.str(),
         "throughput_messages_per_second=2000.000000",
-        "standard timing throughput"
-    );
+        "standard timing throughput");
 }
 
 } // namespace md::test

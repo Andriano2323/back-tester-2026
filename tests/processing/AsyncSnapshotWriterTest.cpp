@@ -5,20 +5,25 @@
 #include <sstream>
 #include <string>
 
-namespace md::test {
-namespace {
+namespace md::test
+{
+namespace
+{
 
-std::size_t occurrenceCount(const std::string& text, const std::string& needle) {
+std::size_t occurrenceCount(const std::string& text, const std::string& needle)
+{
     std::size_t count = 0;
     std::size_t pos = 0;
-    while ((pos = text.find(needle, pos)) != std::string::npos) {
+    while ((pos = text.find(needle, pos)) != std::string::npos)
+    {
         ++count;
         pos += needle.size();
     }
     return count;
 }
 
-BookManagerSnapshot snapshot(std::size_t event_count) {
+BookManagerSnapshot snapshot(std::size_t event_count)
+{
     BookManagerSnapshot result;
     result.event_count = event_count;
     result.timestamp = 100 + event_count;
@@ -37,7 +42,8 @@ BookManagerSnapshot snapshot(std::size_t event_count) {
 
 } // namespace
 
-void testAsyncSnapshotWriterWritesAllJobs() {
+void testAsyncSnapshotWriterWritesAllJobs()
+{
     std::ostringstream out;
     AsyncSnapshotWriter writer{out, SnapshotWriterMode::Async};
 
@@ -53,11 +59,13 @@ void testAsyncSnapshotWriterWritesAllJobs() {
     requireContains(text, "event_count=2", "async snapshot writer second event");
 }
 
-void testAsyncSnapshotWriterFinishDrainsQueue() {
+void testAsyncSnapshotWriterFinishDrainsQueue()
+{
     std::ostringstream out;
     AsyncSnapshotWriter writer{out, SnapshotWriterMode::Async};
 
-    for (std::size_t i = 1; i <= 25; ++i) {
+    for (std::size_t i = 1; i <= 25; ++i)
+    {
         writer.write(snapshot(i));
     }
     writer.finish();

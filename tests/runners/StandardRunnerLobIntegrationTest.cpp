@@ -7,44 +7,52 @@
 #include <sstream>
 #include <string>
 
-namespace md::test {
-namespace {
+namespace md::test
+{
+namespace
+{
 
-std::int64_t P(std::int64_t integer_price) {
+std::int64_t P(std::int64_t integer_price)
+{
     return integer_price * 1'000'000'000LL;
 }
 
-std::string syntheticLobInput() {
-    return
-        "{\"ts_recv\":100,\"ts_event\":100,\"instrument_id\":1,\"order_id\":1,\"side\":\"B\",\"price\":100000000000,\"size\":10,\"action\":\"A\"}\n"
-        "{\"ts_recv\":101,\"ts_event\":101,\"instrument_id\":1,\"order_id\":2,\"side\":\"A\",\"price\":105000000000,\"size\":7,\"action\":\"A\"}\n"
-        "{\"ts_recv\":102,\"ts_event\":102,\"instrument_id\":2,\"order_id\":3,\"side\":\"B\",\"price\":200000000000,\"size\":20,\"action\":\"A\"}\n"
-        "{\"ts_recv\":103,\"ts_event\":103,\"instrument_id\":1,\"order_id\":1,\"side\":\"B\",\"price\":101000000000,\"size\":8,\"action\":\"M\"}\n"
-        "{\"ts_recv\":104,\"ts_event\":104,\"instrument_id\":1,\"order_id\":2,\"size\":3,\"action\":\"C\"}\n"
-        "{\"ts_recv\":105,\"ts_event\":105,\"instrument_id\":1,\"order_id\":4,\"side\":\"B\",\"price\":99000000000,\"size\":5,\"action\":\"A\"}\n"
-        "{\"ts_recv\":106,\"ts_event\":106,\"instrument_id\":1,\"order_id\":999,\"side\":\"B\",\"price\":102000000000,\"size\":1,\"action\":\"T\"}\n"
-        "{\"ts_recv\":107,\"ts_event\":107,\"instrument_id\":1,\"order_id\":1,\"size\":2,\"action\":\"F\"}\n";
+std::string syntheticLobInput()
+{
+    return "{\"ts_recv\":100,\"ts_event\":100,\"instrument_id\":1,\"order_id\":1,\"side\":\"B\",\"price\":100000000000,\"size\":10,\"action\":\"A\"}\n"
+           "{\"ts_recv\":101,\"ts_event\":101,\"instrument_id\":1,\"order_id\":2,\"side\":\"A\",\"price\":105000000000,\"size\":7,\"action\":\"A\"}\n"
+           "{\"ts_recv\":102,\"ts_event\":102,\"instrument_id\":2,\"order_id\":3,\"side\":\"B\",\"price\":200000000000,\"size\":20,\"action\":\"A\"}\n"
+           "{\"ts_recv\":103,\"ts_event\":103,\"instrument_id\":1,\"order_id\":1,\"side\":\"B\",\"price\":101000000000,\"size\":8,\"action\":\"M\"}\n"
+           "{\"ts_recv\":104,\"ts_event\":104,\"instrument_id\":1,\"order_id\":2,\"size\":3,\"action\":\"C\"}\n"
+           "{\"ts_recv\":105,\"ts_event\":105,\"instrument_id\":1,\"order_id\":4,\"side\":\"B\",\"price\":99000000000,\"size\":5,\"action\":\"A\"}\n"
+           "{\"ts_recv\":106,\"ts_event\":106,\"instrument_id\":1,\"order_id\":999,\"side\":\"B\",\"price\":102000000000,\"size\":1,\"action\":\"T\"}\n"
+           "{\"ts_recv\":107,\"ts_event\":107,\"instrument_id\":1,\"order_id\":1,\"size\":2,\"action\":\"F\"}\n";
 }
 
-std::filesystem::path writeSyntheticLobFile(const std::filesystem::path& dir) {
+std::filesystem::path writeSyntheticLobFile(const std::filesystem::path& dir)
+{
     const auto file = dir / "lob_standard_synthetic.ndjson";
     writeFile(file, syntheticLobInput());
     return file;
 }
 
-std::size_t occurrenceCount(const std::string& text, const std::string& needle) {
+std::size_t occurrenceCount(const std::string& text, const std::string& needle)
+{
     std::size_t count = 0;
     std::size_t pos = 0;
-    while ((pos = text.find(needle, pos)) != std::string::npos) {
+    while ((pos = text.find(needle, pos)) != std::string::npos)
+    {
         ++count;
         pos += needle.size();
     }
     return count;
 }
 
-double lineValueAfter(const std::string& text, const std::string& prefix) {
+double lineValueAfter(const std::string& text, const std::string& prefix)
+{
     const auto pos = text.find(prefix);
-    if (pos == std::string::npos) {
+    if (pos == std::string::npos)
+    {
         throw std::runtime_error("missing output line: " + prefix);
     }
 
@@ -55,7 +63,8 @@ double lineValueAfter(const std::string& text, const std::string& prefix) {
 
 } // namespace
 
-void testStandardRunnerWithLobProcessorReconstructsExpectedBooks() {
+void testStandardRunnerWithLobProcessorReconstructsExpectedBooks()
+{
     const auto dir = makeTempDir("standard_lob_reconstructs");
     const auto file = writeSyntheticLobFile(dir);
 
@@ -93,7 +102,8 @@ void testStandardRunnerWithLobProcessorReconstructsExpectedBooks() {
     std::filesystem::remove_all(dir);
 }
 
-void testStandardRunnerWithLobProcessorPrintsExpectedSnapshots() {
+void testStandardRunnerWithLobProcessorPrintsExpectedSnapshots()
+{
     const auto dir = makeTempDir("standard_lob_snapshots");
     const auto file = writeSyntheticLobFile(dir);
 
@@ -121,7 +131,8 @@ void testStandardRunnerWithLobProcessorPrintsExpectedSnapshots() {
     std::filesystem::remove_all(dir);
 }
 
-void testStandardRunnerReportsZeroChronologicalViolationsForSortedFile() {
+void testStandardRunnerReportsZeroChronologicalViolationsForSortedFile()
+{
     const auto dir = makeTempDir("standard_lob_chronological");
     const auto file = writeSyntheticLobFile(dir);
 
@@ -135,7 +146,8 @@ void testStandardRunnerReportsZeroChronologicalViolationsForSortedFile() {
     std::filesystem::remove_all(dir);
 }
 
-void testLobStandardFinalOutputContainsRequiredSections() {
+void testLobStandardFinalOutputContainsRequiredSections()
+{
     const auto dir = makeTempDir("standard_lob_final_output");
     const auto file = writeSyntheticLobFile(dir);
 
@@ -166,8 +178,7 @@ void testLobStandardFinalOutputContainsRequiredSections() {
     require(lineValueAfter(text, "wall_clock_seconds=") > 0.0, "final output wall clock is positive");
     require(
         lineValueAfter(text, "throughput_messages_per_second=") > 0.0,
-        "final output throughput is positive"
-    );
+        "final output throughput is positive");
 
     requireContains(text, "instrument_id=1", "final output instrument 1");
     requireContains(text, "resting_orders=3", "final output instrument 1 resting orders");
