@@ -44,6 +44,7 @@ set(INGEST_TEST_SOURCES
     tests/book/LimitOrderBookTest.cpp
     tests/concurrency/NonBlockingQueueTest.cpp
     tests/domain/MarketDataEventTest.cpp
+    tests/domain/DispatchSequenceTest.cpp
     tests/domain/TypesTest.cpp
     tests/lob/EngineViewTest.cpp
     tests/lob/FillSimulatorTest.cpp
@@ -53,8 +54,11 @@ set(INGEST_TEST_SOURCES
     tests/lob/SimulatedLOBTest.cpp
     tests/lob/ThreadSafetyTest.cpp
     tests/parsing/JsonParserTest.cpp
+    tests/messaging/MarketDataEnvelopeTest.cpp
     tests/processing/AsyncSnapshotWriterTest.cpp
     tests/processing/LobMarketDataEventProcessorTest.cpp
+    tests/processing/MarketDataEnvelopeProcessorTest.cpp
+    tests/runners/DispatchEnvelopeIntegrationTest.cpp
     tests/runners/FlatMergeRunnerTest.cpp
     tests/runners/HardLobIntegrationTest.cpp
     tests/runners/HierarchicalMergeRunnerTest.cpp
