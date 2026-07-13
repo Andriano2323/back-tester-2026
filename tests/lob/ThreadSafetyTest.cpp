@@ -10,16 +10,18 @@
 #include <thread>
 #include <vector>
 
-namespace md::test {
-namespace {
+namespace md::test
+{
+namespace
+{
 
 MarketDataEvent addHistorical(
     std::uint64_t order_id,
     Side side,
     md::lob::Price price,
     md::lob::Quantity size,
-    std::uint64_t timestamp
-) {
+    std::uint64_t timestamp)
+{
     MarketDataEvent event;
     event.timestamp = timestamp;
     event.ts_recv = timestamp;
@@ -33,15 +35,18 @@ MarketDataEvent addHistorical(
     return event;
 }
 
-void rethrowFirstFailure(const std::vector<std::exception_ptr>& failures) {
-    if (!failures.empty()) {
+void rethrowFirstFailure(const std::vector<std::exception_ptr>& failures)
+{
+    if (!failures.empty())
+    {
         std::rethrow_exception(failures.front());
     }
 }
 
 } // namespace
 
-void testConcurrentEngineViewsNoCrashesNoLostIsolation() {
+void testConcurrentEngineViewsNoCrashesNoLostIsolation()
+{
     constexpr std::size_t engine_count = 8;
     constexpr std::size_t writer_events = 10'000;
     constexpr std::size_t reader_iterations = 250;
@@ -50,7 +55,8 @@ void testConcurrentEngineViewsNoCrashesNoLostIsolation() {
     store.apply(addHistorical(1, Side::Ask, 101, 100'000, 1));
 
     md::lob::FillSimulator::EngineViews engine_views;
-    for (md::lob::EngineId engine_id = 1; engine_id <= engine_count; ++engine_id) {
+    for (md::lob::EngineId engine_id = 1; engine_id <= engine_count; ++engine_id)
+    {
         engine_views.try_emplace(engine_id, engine_id);
     }
 
@@ -58,35 +64,43 @@ void testConcurrentEngineViewsNoCrashesNoLostIsolation() {
     std::mutex failures_mutex;
     std::vector<std::exception_ptr> failures;
 
-    auto captureFailure = [&failures_mutex, &failures]() {
+    auto captureFailure = [&failures_mutex, &failures]()
+    {
         std::lock_guard lock{failures_mutex};
         failures.push_back(std::current_exception());
     };
 
-    std::thread writer{[&]() {
-        try {
-            while (!start.load(std::memory_order_acquire)) {
-                std::this_thread::yield();
-            }
+    std::thread writer{[&]()
+                       {
+                           try
+                           {
+                               while (!start.load(std::memory_order_acquire))
+                               {
+                                   std::this_thread::yield();
+                               }
 
-            for (std::size_t i = 0; i < writer_events; ++i) {
-                store.apply(addHistorical(
-                    10'000 + i,
-                    Side::Ask,
-                    101,
-                    10,
-                    static_cast<std::uint64_t>(2 + i)
-                ));
-            }
-        } catch (...) {
-            captureFailure();
-        }
-    }};
+                               for (std::size_t i = 0; i < writer_events; ++i)
+                               {
+                                   store.apply(addHistorical(
+                                       10'000 + i,
+                                       Side::Ask,
+                                       101,
+                                       10,
+                                       static_cast<std::uint64_t>(2 + i)));
+                               }
+                           }
+                           catch (...)
+                           {
+                               captureFailure();
+                           }
+                       }};
 
     std::vector<std::thread> readers;
     readers.reserve(engine_count);
-    for (md::lob::EngineId engine_id = 1; engine_id <= engine_count; ++engine_id) {
-        readers.emplace_back([&, engine_id]() {
+    for (md::lob::EngineId engine_id = 1; engine_id <= engine_count; ++engine_id)
+    {
+        readers.emplace_back([&, engine_id]()
+                             {
             try {
                 while (!start.load(std::memory_order_acquire)) {
                     std::this_thread::yield();
@@ -142,14 +156,14 @@ void testConcurrentEngineViewsNoCrashesNoLostIsolation() {
                 }
             } catch (...) {
                 captureFailure();
-            }
-        });
+            } });
     }
 
     start.store(true, std::memory_order_release);
 
     writer.join();
-    for (auto& reader : readers) {
+    for (auto& reader : readers)
+    {
         reader.join();
     }
 

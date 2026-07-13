@@ -6,23 +6,23 @@
 #include <string>
 #include <vector>
 
-namespace md::test {
-namespace {
+namespace md::test
+{
+namespace
+{
 
 std::string rootTimestampLine(
     std::uint64_t ts_event,
     const std::string& order_id_json,
-    const std::string& instrument_id_json
-) {
-    return "{\"ts_event\":" + std::to_string(ts_event)
-        + ",\"header\":{\"instrument_id\":" + instrument_id_json
-        + "},\"action\":\"A\",\"side\":\"B\",\"price\":1.250000000,\"size\":10,\"order_id\":"
-        + order_id_json + "}";
+    const std::string& instrument_id_json)
+{
+    return "{\"ts_event\":" + std::to_string(ts_event) + ",\"header\":{\"instrument_id\":" + instrument_id_json + "},\"action\":\"A\",\"side\":\"B\",\"price\":1.250000000,\"size\":10,\"order_id\":" + order_id_json + "}";
 }
 
 } // namespace
 
-void testParserValidEvent() {
+void testParserValidEvent()
+{
     const auto parsed = parseMarketDataEventLine(line(100, 42), 1, 7, 11);
     require(parsed.timestamp == xeur_base_timestamp + 100, "timestamp parsed");
     require(parsed.ts_recv == xeur_base_timestamp + 100, "ts_recv parsed");
@@ -38,7 +38,8 @@ void testParserValidEvent() {
     require(parsed.line_number == 1, "line number preserved");
 }
 
-void testParserNullAndDecimalPrices() {
+void testParserNullAndDecimalPrices()
+{
     const auto null_price = parseMarketDataEventLine(line(100, 1, 'A', 'C', "null"), 1);
     require(null_price.price == std::numeric_limits<std::int64_t>::max(), "null price maps to UNDEF");
 
@@ -55,7 +56,8 @@ void testParserNullAndDecimalPrices() {
     require(fixed_integer.price == 100000000000LL, "integer price is already fixed precision");
 }
 
-void testParserTimestampFallbackAndNumericFields() {
+void testParserTimestampFallbackAndNumericFields()
+{
     const auto fallback = parseMarketDataEventLine(rootTimestampLine(123456789, "987654321", "\"777\""), 3);
     require(fallback.ts_recv == 0, "missing ts_recv stays empty");
     require(fallback.ts_event == 123456789, "root numeric ts_event parsed");
@@ -87,7 +89,8 @@ void testParserTimestampFallbackAndNumericFields() {
     require(parsed.order_id == 0, "databento string order_id parsed");
 }
 
-void testParserSideAndActionCodes() {
+void testParserSideAndActionCodes()
+{
     const std::vector<std::pair<char, Side>> side_cases{
         {'A', Side::Ask},
         {'B', Side::Bid},
@@ -95,7 +98,8 @@ void testParserSideAndActionCodes() {
         {'?', Side::None},
     };
 
-    for (const auto& [code, expected] : side_cases) {
+    for (const auto& [code, expected] : side_cases)
+    {
         const auto parsed = parseMarketDataEventLine(line(100, 1, code, 'A'), 1);
         require(parsed.side == expected, std::string{"side code parsed: "} + code);
     }
@@ -110,7 +114,8 @@ void testParserSideAndActionCodes() {
         {'?', Action::None},
     };
 
-    for (const auto& [code, expected] : action_cases) {
+    for (const auto& [code, expected] : action_cases)
+    {
         const auto parsed = parseMarketDataEventLine(line(100, 1, 'B', code), 1);
         require(parsed.action == expected, std::string{"action code parsed: "} + code);
     }

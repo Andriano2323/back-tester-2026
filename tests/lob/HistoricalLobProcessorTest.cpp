@@ -8,15 +8,17 @@
 #include <sstream>
 #include <string>
 
-namespace md::test {
-namespace {
+namespace md::test
+{
+namespace
+{
 
 void requireLevel(
     const std::optional<md::lob::BookLevel>& level,
     md::lob::Price price,
     md::lob::Quantity quantity,
-    const std::string& message
-) {
+    const std::string& message)
+{
     require(level.has_value(), message + ": missing level");
     require(level->price == price, message + ": unexpected price");
     require(level->size == quantity, message + ": unexpected size");
@@ -24,7 +26,8 @@ void requireLevel(
 
 } // namespace
 
-void testHistoricalLobProcessorBuildsBooksPerInstrument() {
+void testHistoricalLobProcessorBuildsBooksPerInstrument()
+{
     const auto file = testDataDir().parent_path() / "data" / "lob_basic.ndjson";
 
     std::ostringstream err;

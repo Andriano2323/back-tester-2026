@@ -2,11 +2,14 @@
 
 #include "book/LimitOrderBook.hpp"
 
-namespace md::test {
+namespace md::test
+{
 
-namespace {
+namespace
+{
 
-std::int64_t P(std::int64_t integer_price) {
+std::int64_t P(std::int64_t integer_price)
+{
     return integer_price * 1'000'000'000LL;
 }
 
@@ -14,8 +17,8 @@ MarketDataEvent add(
     std::uint64_t order_id,
     Side side,
     std::int64_t price,
-    std::uint64_t size
-) {
+    std::uint64_t size)
+{
     MarketDataEvent event;
     event.order_id = order_id;
     event.side = side;
@@ -26,7 +29,8 @@ MarketDataEvent add(
     return event;
 }
 
-MarketDataEvent cancel(std::uint64_t order_id, std::uint64_t size) {
+MarketDataEvent cancel(std::uint64_t order_id, std::uint64_t size)
+{
     MarketDataEvent event;
     event.order_id = order_id;
     event.size = size;
@@ -39,8 +43,8 @@ MarketDataEvent modify(
     std::uint64_t order_id,
     Side side,
     std::int64_t price,
-    std::uint64_t size
-) {
+    std::uint64_t size)
+{
     MarketDataEvent event;
     event.order_id = order_id;
     event.side = side;
@@ -51,14 +55,16 @@ MarketDataEvent modify(
     return event;
 }
 
-MarketDataEvent clearEvent() {
+MarketDataEvent clearEvent()
+{
     MarketDataEvent event;
     event.action = Action::Clear;
     event.instrument_id = 42;
     return event;
 }
 
-MarketDataEvent trade(std::int64_t price, std::uint64_t size) {
+MarketDataEvent trade(std::int64_t price, std::uint64_t size)
+{
     MarketDataEvent event;
     event.price = price;
     event.size = size;
@@ -67,7 +73,8 @@ MarketDataEvent trade(std::int64_t price, std::uint64_t size) {
     return event;
 }
 
-MarketDataEvent fill(std::uint64_t order_id, std::uint64_t size) {
+MarketDataEvent fill(std::uint64_t order_id, std::uint64_t size)
+{
     MarketDataEvent event;
     event.order_id = order_id;
     event.size = size;
@@ -81,8 +88,8 @@ void attachDiagnosticMetadata(
     std::uint64_t timestamp,
     std::uint32_t source_file_id,
     std::uint64_t source_sequence,
-    std::size_t line_number
-) {
+    std::size_t line_number)
+{
     event.timestamp = timestamp;
     event.source_file_id = source_file_id;
     event.source_sequence = source_sequence;
@@ -91,7 +98,8 @@ void attachDiagnosticMetadata(
 
 } // namespace
 
-void testLimitOrderBookStartsEmpty() {
+void testLimitOrderBookStartsEmpty()
+{
     LimitOrderBook book{42};
 
     require(!book.bestBid().has_value(), "new book has no best bid");
@@ -108,13 +116,15 @@ void testLimitOrderBookStartsEmpty() {
     require(book.fillCount() == 0, "new book has no fills");
 }
 
-void testLimitOrderBookReportsInstrumentId() {
+void testLimitOrderBookReportsInstrumentId()
+{
     LimitOrderBook book{42};
 
     require(book.instrumentId() == 42, "book reports instrument id");
 }
 
-void testLobAddSingleBid() {
+void testLobAddSingleBid()
+{
     LimitOrderBook book{42};
 
     book.apply(add(1, Side::Bid, P(100), 10));
@@ -125,7 +135,8 @@ void testLobAddSingleBid() {
     require(book.restingOrderCount() == 1, "single bid resting count");
 }
 
-void testLobAddSingleAsk() {
+void testLobAddSingleAsk()
+{
     LimitOrderBook book{42};
 
     book.apply(add(2, Side::Ask, P(105), 7));
@@ -136,7 +147,8 @@ void testLobAddSingleAsk() {
     require(book.restingOrderCount() == 1, "single ask resting count");
 }
 
-void testLobAddAggregatesSameBidPrice() {
+void testLobAddAggregatesSameBidPrice()
+{
     LimitOrderBook book{42};
 
     book.apply(add(1, Side::Bid, P(100), 10));
@@ -147,7 +159,8 @@ void testLobAddAggregatesSameBidPrice() {
     require(book.restingOrderCount() == 2, "two bid orders rest");
 }
 
-void testLobAddAggregatesSameAskPrice() {
+void testLobAddAggregatesSameAskPrice()
+{
     LimitOrderBook book{42};
 
     book.apply(add(1, Side::Ask, P(105), 10));
@@ -158,7 +171,8 @@ void testLobAddAggregatesSameAskPrice() {
     require(book.restingOrderCount() == 2, "two ask orders rest");
 }
 
-void testLobBestBidIsHighestBidPrice() {
+void testLobBestBidIsHighestBidPrice()
+{
     LimitOrderBook book{42};
 
     book.apply(add(1, Side::Bid, P(100), 10));
@@ -168,7 +182,8 @@ void testLobBestBidIsHighestBidPrice() {
     require(book.bestBid() == P(101), "best bid is highest bid price");
 }
 
-void testLobBestAskIsLowestAskPrice() {
+void testLobBestAskIsLowestAskPrice()
+{
     LimitOrderBook book{42};
 
     book.apply(add(1, Side::Ask, P(105), 10));
@@ -178,7 +193,8 @@ void testLobBestAskIsLowestAskPrice() {
     require(book.bestAsk() == P(104), "best ask is lowest ask price");
 }
 
-void testLobDuplicateAddReplacesOldOrder() {
+void testLobDuplicateAddReplacesOldOrder()
+{
     LimitOrderBook book{42};
 
     book.apply(add(1, Side::Bid, P(100), 10));
@@ -190,7 +206,8 @@ void testLobDuplicateAddReplacesOldOrder() {
     require(book.restingOrderCount() == 1, "duplicate add keeps one resting order");
 }
 
-void testLobCancelPartial() {
+void testLobCancelPartial()
+{
     LimitOrderBook book{42};
 
     book.apply(add(1, Side::Bid, P(100), 10));
@@ -201,7 +218,8 @@ void testLobCancelPartial() {
     require(book.restingOrderCount() == 1, "partial cancel leaves order resting");
 }
 
-void testLobCancelFullWithSize() {
+void testLobCancelFullWithSize()
+{
     LimitOrderBook book{42};
 
     book.apply(add(1, Side::Bid, P(100), 10));
@@ -212,7 +230,8 @@ void testLobCancelFullWithSize() {
     require(book.restingOrderCount() == 0, "full cancel removes order");
 }
 
-void testLobCancelFullWithZeroSize() {
+void testLobCancelFullWithZeroSize()
+{
     LimitOrderBook book{42};
 
     book.apply(add(1, Side::Ask, P(105), 7));
@@ -223,7 +242,8 @@ void testLobCancelFullWithZeroSize() {
     require(book.restingOrderCount() == 0, "zero-size cancel removes order");
 }
 
-void testLobCancelLargerThanRestingSizeIsCapped() {
+void testLobCancelLargerThanRestingSizeIsCapped()
+{
     LimitOrderBook book{42};
 
     book.apply(add(1, Side::Bid, P(100), 10));
@@ -234,7 +254,8 @@ void testLobCancelLargerThanRestingSizeIsCapped() {
     require(book.restingOrderCount() == 0, "oversized cancel removes order without underflow");
 }
 
-void testLobCancelUnknownOrderIsNoop() {
+void testLobCancelUnknownOrderIsNoop()
+{
     LimitOrderBook book{42};
 
     auto event = cancel(999, 10);
@@ -264,7 +285,8 @@ void testLobCancelUnknownOrderIsNoop() {
     require(diagnostics[0].line_number == 9, "unknown cancel diagnostic line number");
 }
 
-void testLobCancelRemovesEmptyPriceLevel() {
+void testLobCancelRemovesEmptyPriceLevel()
+{
     LimitOrderBook book{42};
 
     book.apply(add(1, Side::Bid, P(100), 10));
@@ -276,7 +298,8 @@ void testLobCancelRemovesEmptyPriceLevel() {
     require(book.restingOrderCount() == 1, "only lower bid remains resting");
 }
 
-void testLobModifySizeSamePrice() {
+void testLobModifySizeSamePrice()
+{
     LimitOrderBook book{42};
 
     book.apply(add(1, Side::Bid, P(100), 10));
@@ -287,7 +310,8 @@ void testLobModifySizeSamePrice() {
     require(book.restingOrderCount() == 1, "same-price modify keeps one resting order");
 }
 
-void testLobModifyPriceLevel() {
+void testLobModifyPriceLevel()
+{
     LimitOrderBook book{42};
 
     book.apply(add(1, Side::Bid, P(100), 10));
@@ -299,7 +323,8 @@ void testLobModifyPriceLevel() {
     require(book.restingOrderCount() == 1, "price modify keeps one resting order");
 }
 
-void testLobModifySideChange() {
+void testLobModifySideChange()
+{
     LimitOrderBook book{42};
 
     book.apply(add(1, Side::Bid, P(100), 10));
@@ -312,7 +337,8 @@ void testLobModifySideChange() {
     require(book.restingOrderCount() == 1, "side modify keeps one resting order");
 }
 
-void testLobModifyUnknownOrderWithFullStateBecomesAdd() {
+void testLobModifyUnknownOrderWithFullStateBecomesAdd()
+{
     LimitOrderBook book{42};
 
     auto event = modify(1, Side::Bid, P(100), 10);
@@ -325,8 +351,7 @@ void testLobModifyUnknownOrderWithFullStateBecomesAdd() {
     require(book.skippedUnknownOrderCount() == 0, "unknown full-state modify is not skipped");
     require(
         book.unknownModifyRecoveredAsAddCount() == 1,
-        "unknown full-state modify increments recovered-as-add count"
-    );
+        "unknown full-state modify increments recovered-as-add count");
     require(book.unknownModifySkippedCount() == 0, "unknown full-state modify does not increment skipped modify count");
     require(book.unknownCancelSkippedCount() == 0, "unknown full-state modify does not increment skipped cancel count");
 
@@ -345,7 +370,8 @@ void testLobModifyUnknownOrderWithFullStateBecomesAdd() {
     require(diagnostics[0].line_number == 4, "unknown full-state modify diagnostic line number");
 }
 
-void testLobModifyUnknownOrderWithoutFullStateIsSkipped() {
+void testLobModifyUnknownOrderWithoutFullStateIsSkipped()
+{
     LimitOrderBook book{42};
 
     MarketDataEvent event;
@@ -381,10 +407,12 @@ void testLobModifyUnknownOrderWithoutFullStateIsSkipped() {
     require(diagnostics[0].line_number == 6, "unknown partial modify diagnostic line number");
 }
 
-void testLobUnknownOrderDiagnosticsAreRateLimited() {
+void testLobUnknownOrderDiagnosticsAreRateLimited()
+{
     LimitOrderBook book{42};
 
-    for (std::uint64_t order_id = 1; order_id <= 40; ++order_id) {
+    for (std::uint64_t order_id = 1; order_id <= 40; ++order_id)
+    {
         auto event = cancel(order_id, 1);
         attachDiagnosticMetadata(event, order_id, 0, order_id, static_cast<std::size_t>(order_id));
         book.apply(event);
@@ -396,7 +424,8 @@ void testLobUnknownOrderDiagnosticsAreRateLimited() {
     require(book.unknownOrderDiagnostics().back().order_id == 32, "diagnostic samples stop at sample limit");
 }
 
-void testLobBidAskViewsIterateWithoutCopy() {
+void testLobBidAskViewsIterateWithoutCopy()
+{
     LimitOrderBook book{42};
 
     book.apply(add(1, Side::Bid, P(100), 10));
@@ -427,7 +456,8 @@ void testLobBidAskViewsIterateWithoutCopy() {
     require(ask_it->second == 7, "ask view second level volume");
 }
 
-void testLobClearEmptiesBook() {
+void testLobClearEmptiesBook()
+{
     LimitOrderBook book{42};
 
     book.apply(add(1, Side::Bid, P(100), 10));
@@ -441,7 +471,8 @@ void testLobClearEmptiesBook() {
     require(book.restingOrderCount() == 0, "clear removes resting orders");
 }
 
-void testLobTradeIsExplicitNoop() {
+void testLobTradeIsExplicitNoop()
+{
     LimitOrderBook book{42};
 
     book.apply(add(1, Side::Bid, P(100), 10));
@@ -453,7 +484,8 @@ void testLobTradeIsExplicitNoop() {
     require(book.tradeCount() == 1, "trade increments explicit noop count");
 }
 
-void testLobFillIsExplicitNoop() {
+void testLobFillIsExplicitNoop()
+{
     LimitOrderBook book{42};
 
     book.apply(add(1, Side::Bid, P(100), 10));

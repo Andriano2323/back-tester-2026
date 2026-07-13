@@ -13,14 +13,18 @@
 #include <utility>
 #include <vector>
 
-namespace md::test {
-namespace {
+namespace md::test
+{
+namespace
+{
 
-std::int64_t P(std::int64_t integer_price) {
+std::int64_t P(std::int64_t integer_price)
+{
     return integer_price * 1'000'000'000LL;
 }
 
-LobProcessorConfig hardLobConfig(SnapshotWriterMode snapshot_writer_mode = SnapshotWriterMode::Sync) {
+LobProcessorConfig hardLobConfig(SnapshotWriterMode snapshot_writer_mode = SnapshotWriterMode::Sync)
+{
     LobProcessorConfig config;
     config.snapshot_interval_events = 3;
     config.max_snapshots = 2;
@@ -29,21 +33,25 @@ LobProcessorConfig hardLobConfig(SnapshotWriterMode snapshot_writer_mode = Snaps
     return config;
 }
 
-std::size_t occurrenceCount(const std::string& text, const std::string& needle) {
+std::size_t occurrenceCount(const std::string& text, const std::string& needle)
+{
     std::size_t count = 0;
     std::size_t pos = 0;
-    while ((pos = text.find(needle, pos)) != std::string::npos) {
+    while ((pos = text.find(needle, pos)) != std::string::npos)
+    {
         ++count;
         pos += needle.size();
     }
     return count;
 }
 
-std::vector<std::string> split(const std::string& text, char delimiter) {
+std::vector<std::string> split(const std::string& text, char delimiter)
+{
     std::vector<std::string> items;
     std::string item;
     std::istringstream input{text};
-    while (std::getline(input, item, delimiter)) {
+    while (std::getline(input, item, delimiter))
+    {
         items.push_back(item);
     }
     return items;
@@ -53,8 +61,8 @@ void requireExpectedHardLobResult(
     const RunResult& result,
     const BookManager& books,
     const std::string& output,
-    const std::string& strategy_name
-) {
+    const std::string& strategy_name)
+{
     require(result.strategy_name == strategy_name, strategy_name + " lob strategy name");
     require(result.summary.total_messages_processed == 7, strategy_name + " lob processed events");
     require(result.diagnostics.total_lines_read == 7, strategy_name + " lob lines read");
@@ -83,61 +91,73 @@ void requireExpectedHardLobResult(
     requireContains(output, "event_count=6", strategy_name + " lob snapshot at event 6");
 }
 
-std::filesystem::path hardLobSyntheticDir() {
+std::filesystem::path hardLobSyntheticDir()
+{
     return testDataDir() / "hard_lob_synthetic";
 }
 
-std::filesystem::path hardLobEqualTimestampsDir() {
+std::filesystem::path hardLobEqualTimestampsDir()
+{
     return testDataDir() / "hard_lob_equal_timestamps";
 }
 
-std::vector<BenchmarkResult> runSyntheticLobBenchmark() {
+std::vector<BenchmarkResult> runSyntheticLobBenchmark()
+{
     std::ostringstream err;
     return runLobBenchmark(hardLobSyntheticDir(), InputFormat::Json, false, err);
 }
 
-std::vector<BenchmarkResult> runSyntheticShardedLobBenchmark(std::size_t worker_count) {
+std::vector<BenchmarkResult> runSyntheticShardedLobBenchmark(std::size_t worker_count)
+{
     std::ostringstream err;
     return runLobBenchmark(hardLobSyntheticDir(), InputFormat::Json, false, err, worker_count);
 }
 
-std::vector<BenchmarkResult> runSyntheticLoggingBenchmark() {
+std::vector<BenchmarkResult> runSyntheticLoggingBenchmark()
+{
     std::ostringstream err;
     return runLoggingBenchmark(hardLobSyntheticDir(), InputFormat::Json, false, err);
 }
 
-std::string printSyntheticLobBenchmark(const std::vector<BenchmarkResult>& results) {
+std::string printSyntheticLobBenchmark(const std::vector<BenchmarkResult>& results)
+{
     std::ostringstream out;
     printLobBenchmarkResults(results, out);
     return out.str();
 }
 
-std::string printSyntheticLoggingBenchmark(const std::vector<BenchmarkResult>& results) {
+std::string printSyntheticLoggingBenchmark(const std::vector<BenchmarkResult>& results)
+{
     std::ostringstream out;
     printBenchmarkResults(results, out);
     return out.str();
 }
 
-std::vector<std::vector<std::string>> benchmarkCsvRows(const std::string& output) {
+std::vector<std::vector<std::string>> benchmarkCsvRows(const std::string& output)
+{
     std::vector<std::vector<std::string>> rows;
     std::istringstream input{output};
     std::string line;
-    while (std::getline(input, line)) {
-        if (!line.empty()) {
+    while (std::getline(input, line))
+    {
+        if (!line.empty())
+        {
             rows.push_back(split(line, ','));
         }
     }
     return rows;
 }
 
-struct LobRun {
+struct LobRun
+{
     RunResult result;
     BookManager books;
     std::string output;
     std::size_t snapshot_written_count{};
 };
 
-struct ShardedLobRun {
+struct ShardedLobRun
+{
     RunResult result;
     std::string digest;
     std::string output;
@@ -147,8 +167,8 @@ struct ShardedLobRun {
 
 LobRun runFlatLob(
     const std::filesystem::path& input_dir,
-    SnapshotWriterMode snapshot_writer_mode = SnapshotWriterMode::Sync
-) {
+    SnapshotWriterMode snapshot_writer_mode = SnapshotWriterMode::Sync)
+{
     std::ostringstream out;
     std::ostringstream err;
     LobMarketDataEventProcessor processor{out, hardLobConfig(snapshot_writer_mode)};
@@ -157,7 +177,8 @@ LobRun runFlatLob(
     return LobRun{std::move(result), processor.books(), out.str(), processor.snapshotWrittenCount()};
 }
 
-LobRun runFlatLobNoSnapshots(const std::filesystem::path& input_dir) {
+LobRun runFlatLobNoSnapshots(const std::filesystem::path& input_dir)
+{
     std::ostringstream out;
     std::ostringstream err;
     LobProcessorConfig config;
@@ -171,8 +192,8 @@ LobRun runFlatLobNoSnapshots(const std::filesystem::path& input_dir) {
 
 ShardedLobRun runFlatShardedLob(
     const std::filesystem::path& input_dir,
-    std::size_t worker_count
-) {
+    std::size_t worker_count)
+{
     std::ostringstream out;
     std::ostringstream err;
     LobProcessorConfig config;
@@ -192,8 +213,8 @@ ShardedLobRun runFlatShardedLob(
 
 ShardedLobRun runHierarchyShardedLob(
     const std::filesystem::path& input_dir,
-    std::size_t worker_count
-) {
+    std::size_t worker_count)
+{
     std::ostringstream out;
     std::ostringstream err;
     LobProcessorConfig config;
@@ -213,8 +234,8 @@ ShardedLobRun runHierarchyShardedLob(
 
 LobRun runHierarchyLob(
     const std::filesystem::path& input_dir,
-    SnapshotWriterMode snapshot_writer_mode = SnapshotWriterMode::Sync
-) {
+    SnapshotWriterMode snapshot_writer_mode = SnapshotWriterMode::Sync)
+{
     std::ostringstream out;
     std::ostringstream err;
     LobMarketDataEventProcessor processor{out, hardLobConfig(snapshot_writer_mode)};
@@ -225,7 +246,8 @@ LobRun runHierarchyLob(
 
 } // namespace
 
-void testFlatRunnerWithLobProcessorReconstructsExpectedBooks() {
+void testFlatRunnerWithLobProcessorReconstructsExpectedBooks()
+{
     std::ostringstream out;
     std::ostringstream err;
     LobMarketDataEventProcessor processor{out, hardLobConfig()};
@@ -236,7 +258,8 @@ void testFlatRunnerWithLobProcessorReconstructsExpectedBooks() {
     requireContains(err.str(), "selected_mode=flat", "flat lob verbose mode logged");
 }
 
-void testHierarchyRunnerWithLobProcessorReconstructsExpectedBooks() {
+void testHierarchyRunnerWithLobProcessorReconstructsExpectedBooks()
+{
     std::ostringstream out;
     std::ostringstream err;
     LobMarketDataEventProcessor processor{out, hardLobConfig()};
@@ -247,7 +270,8 @@ void testHierarchyRunnerWithLobProcessorReconstructsExpectedBooks() {
     requireContains(err.str(), "selected_mode=hierarchy", "hierarchy lob verbose mode logged");
 }
 
-void testFlatAndHierarchyLobFinalBooksAreIdentical() {
+void testFlatAndHierarchyLobFinalBooksAreIdentical()
+{
     auto flat = runFlatLob(hardLobSyntheticDir());
     auto hierarchy = runHierarchyLob(hardLobSyntheticDir());
 
@@ -255,22 +279,22 @@ void testFlatAndHierarchyLobFinalBooksAreIdentical() {
     requireExpectedHardLobResult(hierarchy.result, hierarchy.books, hierarchy.output, "hierarchy");
     require(
         flat.books.stableStateDigest() == hierarchy.books.stableStateDigest(),
-        "flat and hierarchy final LOB digests are identical"
-    );
+        "flat and hierarchy final LOB digests are identical");
 }
 
-void testFlatAndHierarchyLobSyntheticHaveSameMessageCount() {
+void testFlatAndHierarchyLobSyntheticHaveSameMessageCount()
+{
     auto flat = runFlatLob(hardLobSyntheticDir());
     auto hierarchy = runHierarchyLob(hardLobSyntheticDir());
 
     require(
         flat.result.summary.total_messages_processed == hierarchy.result.summary.total_messages_processed,
-        "flat and hierarchy synthetic lob message counts match"
-    );
+        "flat and hierarchy synthetic lob message counts match");
     require(flat.result.summary.total_messages_processed == 7, "synthetic lob message count is expected");
 }
 
-void testFlatAndHierarchyLobSyntheticHaveZeroChronologicalViolations() {
+void testFlatAndHierarchyLobSyntheticHaveZeroChronologicalViolations()
+{
     auto flat = runFlatLob(hardLobSyntheticDir());
     auto hierarchy = runHierarchyLob(hardLobSyntheticDir());
 
@@ -278,7 +302,8 @@ void testFlatAndHierarchyLobSyntheticHaveZeroChronologicalViolations() {
     require(hierarchy.result.summary.chronological_violations == 0, "hierarchy synthetic lob chronological violations");
 }
 
-void testFlatAndHierarchyLobSyntheticHaveSameFinalLobDigest() {
+void testFlatAndHierarchyLobSyntheticHaveSameFinalLobDigest()
+{
     auto flat = runFlatLob(hardLobSyntheticDir());
     auto hierarchy = runHierarchyLob(hardLobSyntheticDir());
 
@@ -294,7 +319,8 @@ void testFlatAndHierarchyLobSyntheticHaveSameFinalLobDigest() {
     requireContains(flat_digest, "bids=[200.000000000x12]", "digest includes resolved missing instrument cancel");
 }
 
-void testFlatAndHierarchyLobEqualTimestampsAreDeterministic() {
+void testFlatAndHierarchyLobEqualTimestampsAreDeterministic()
+{
     auto flat = runFlatLob(hardLobEqualTimestampsDir());
     auto hierarchy = runHierarchyLob(hardLobEqualTimestampsDir());
 
@@ -304,8 +330,7 @@ void testFlatAndHierarchyLobEqualTimestampsAreDeterministic() {
         hardLobEqualTimestampsDir(),
         flat_capture,
         false,
-        flat_err
-    );
+        flat_err);
 
     CapturingProcessor hierarchy_capture;
     std::ostringstream hierarchy_err;
@@ -313,8 +338,7 @@ void testFlatAndHierarchyLobEqualTimestampsAreDeterministic() {
         hardLobEqualTimestampsDir(),
         hierarchy_capture,
         false,
-        hierarchy_err
-    );
+        hierarchy_err);
 
     require(flat.result.summary.total_messages_processed == 2, "flat equal timestamp message count");
     require(hierarchy.result.summary.total_messages_processed == 2, "hierarchy equal timestamp message count");
@@ -324,25 +348,24 @@ void testFlatAndHierarchyLobEqualTimestampsAreDeterministic() {
     require(hierarchy.result.summary.chronological_violations == 0, "hierarchy equal timestamp chronological violations");
     require(flat_capture.events.size() == hierarchy_capture.events.size(), "equal timestamp captured event counts match");
     require(flat_capture.events.size() == 2, "equal timestamp captured two events");
-    for (std::size_t i = 0; i < flat_capture.events.size(); ++i) {
+    for (std::size_t i = 0; i < flat_capture.events.size(); ++i)
+    {
         require(
             flat_capture.events[i].order_id == hierarchy_capture.events[i].order_id,
-            "equal timestamp flat and hierarchy event order match"
-        );
+            "equal timestamp flat and hierarchy event order match");
         require(
             flat_capture.events[i].source_file_id == hierarchy_capture.events[i].source_file_id,
-            "equal timestamp flat and hierarchy source file order match"
-        );
+            "equal timestamp flat and hierarchy source file order match");
     }
     require(flat_capture.events[0].order_id == 1, "equal timestamp first event uses lower source file id");
     require(flat_capture.events[1].order_id == 2, "equal timestamp second event uses higher source file id");
     require(
         flat.books.stableStateDigest() == hierarchy.books.stableStateDigest(),
-        "equal timestamp final digest is deterministic across flat and hierarchy"
-    );
+        "equal timestamp final digest is deterministic across flat and hierarchy");
 }
 
-void testFlatLobAsyncSnapshotsMatchSyncOnSyntheticFolder() {
+void testFlatLobAsyncSnapshotsMatchSyncOnSyntheticFolder()
+{
     const auto sync = runFlatLob(hardLobSyntheticDir(), SnapshotWriterMode::Sync);
     const auto async = runFlatLob(hardLobSyntheticDir(), SnapshotWriterMode::Async);
 
@@ -356,15 +379,14 @@ void testFlatLobAsyncSnapshotsMatchSyncOnSyntheticFolder() {
     require(async.snapshot_written_count == 2, "async synthetic folder written snapshots");
     require(
         sync.books.stableStateDigest() == async.books.stableStateDigest(),
-        "sync and async synthetic folder final LOB digest match"
-    );
+        "sync and async synthetic folder final LOB digest match");
     require(
         occurrenceCount(sync.output, "LOB Snapshot") == occurrenceCount(async.output, "LOB Snapshot"),
-        "sync and async synthetic folder snapshot count match"
-    );
+        "sync and async synthetic folder snapshot count match");
 }
 
-void testBenchmarkLobRunsFlatAndHierarchy() {
+void testBenchmarkLobRunsFlatAndHierarchy()
+{
     const auto results = runSyntheticLobBenchmark();
     const auto output = printSyntheticLobBenchmark(results);
 
@@ -378,7 +400,8 @@ void testBenchmarkLobRunsFlatAndHierarchy() {
     requireContains(output, "LobDigest", "lob benchmark digest header");
 }
 
-void testBenchmarkLoggingRunsFlatAndHierarchy() {
+void testBenchmarkLoggingRunsFlatAndHierarchy()
+{
     const auto results = runSyntheticLoggingBenchmark();
     const auto output = printSyntheticLoggingBenchmark(results);
 
@@ -392,14 +415,16 @@ void testBenchmarkLoggingRunsFlatAndHierarchy() {
     require(output.find("LobDigest") == std::string::npos, "logging benchmark does not print digest column");
 }
 
-void testBenchmarkLobSuppressesSnapshotsByDefault() {
+void testBenchmarkLobSuppressesSnapshotsByDefault()
+{
     const auto output = printSyntheticLobBenchmark(runSyntheticLobBenchmark());
 
     require(output.find("LOB Snapshot") == std::string::npos, "lob benchmark suppresses snapshots");
     require(output.find("BookManager snapshot") == std::string::npos, "lob benchmark suppresses book snapshots");
 }
 
-void testBenchmarkLoggingOutputsParseableReportRows() {
+void testBenchmarkLoggingOutputsParseableReportRows()
+{
     const auto results = runSyntheticLoggingBenchmark();
     const auto output = printSyntheticLoggingBenchmark(results);
     const auto rows = benchmarkCsvRows(output);
@@ -421,7 +446,8 @@ void testBenchmarkLoggingOutputsParseableReportRows() {
     require(std::stod(rows[3][7]) > 0.0, "logging benchmark hierarchy throughput parse");
 }
 
-void testBenchmarkLobOutputsEqualMessageCounts() {
+void testBenchmarkLobOutputsEqualMessageCounts()
+{
     const auto results = runSyntheticLobBenchmark();
     const auto output = printSyntheticLobBenchmark(results);
     const auto rows = benchmarkCsvRows(output);
@@ -432,7 +458,7 @@ void testBenchmarkLobOutputsEqualMessageCounts() {
     require(rows[3].size() == 9, "lob benchmark hierarchy parseable csv columns");
 
     require(results[0].result.summary.total_messages_processed == results[1].result.summary.total_messages_processed,
-        "lob benchmark message counts match");
+            "lob benchmark message counts match");
     require(results[0].result.summary.total_messages_processed == 7, "lob benchmark synthetic message count");
     require(results[0].result.summary.chronological_violations == 0, "lob benchmark flat chronological violations");
     require(results[1].result.summary.chronological_violations == 0, "lob benchmark hierarchy chronological violations");
@@ -450,7 +476,8 @@ void testBenchmarkLobOutputsEqualMessageCounts() {
     require(std::stod(rows[3][7]) > 0.0, "lob benchmark hierarchy throughput parse");
 }
 
-void testBenchmarkLobOutputsEqualFinalLobDigest() {
+void testBenchmarkLobOutputsEqualFinalLobDigest()
+{
     const auto results = runSyntheticLobBenchmark();
     const auto output = printSyntheticLobBenchmark(results);
     const auto rows = benchmarkCsvRows(output);
@@ -464,7 +491,8 @@ void testBenchmarkLobOutputsEqualFinalLobDigest() {
     require(rows[2][8].starts_with("0x"), "lob benchmark digest is hex fingerprint");
 }
 
-void testBenchmarkLobLabelsShardedWorkers() {
+void testBenchmarkLobLabelsShardedWorkers()
+{
     const auto results = runSyntheticShardedLobBenchmark(2);
     const auto output = printSyntheticLobBenchmark(results);
 
@@ -476,7 +504,8 @@ void testBenchmarkLobLabelsShardedWorkers() {
     require(results[0].lob_digest == runSyntheticLobBenchmark()[0].lob_digest, "sharded benchmark digest matches sequential");
 }
 
-void testShardedLobTwoWorkersMatchesSequentialDigest() {
+void testShardedLobTwoWorkersMatchesSequentialDigest()
+{
     const auto sequential = runFlatLobNoSnapshots(hardLobSyntheticDir());
     const auto sharded = runFlatShardedLob(hardLobSyntheticDir(), 2);
 
@@ -486,7 +515,8 @@ void testShardedLobTwoWorkersMatchesSequentialDigest() {
     require(sharded.digest == sequential.books.stableStateDigest(), "two-worker sharded digest matches sequential");
 }
 
-void testShardedLobFourWorkersMatchesSequentialDigest() {
+void testShardedLobFourWorkersMatchesSequentialDigest()
+{
     const auto sequential = runFlatLobNoSnapshots(hardLobSyntheticDir());
     const auto sharded = runFlatShardedLob(hardLobSyntheticDir(), 4);
 
@@ -496,18 +526,19 @@ void testShardedLobFourWorkersMatchesSequentialDigest() {
     require(sharded.digest == sequential.books.stableStateDigest(), "four-worker sharded digest matches sequential");
 }
 
-void testShardedLobResolvesMissingInstrumentIdByOrderId() {
+void testShardedLobResolvesMissingInstrumentIdByOrderId()
+{
     const auto sharded = runFlatShardedLob(hardLobSyntheticDir(), 2);
 
     require(sharded.unresolved_events == 0, "sharded resolves missing instrument id");
     requireContains(
         sharded.digest,
         "instrument=2,orders=2,best_bid=200.000000000,best_ask=210.000000000,bids=[200.000000000x12]",
-        "sharded digest includes missing-instrument cancel applied to instrument 2"
-    );
+        "sharded digest includes missing-instrument cancel applied to instrument 2");
 }
 
-void testShardedLobPreservesPerInstrumentOrder() {
+void testShardedLobPreservesPerInstrumentOrder()
+{
     const auto sequential = runFlatLobNoSnapshots(hardLobSyntheticDir());
     const auto flat_sharded = runFlatShardedLob(hardLobSyntheticDir(), 4);
     const auto hierarchy_sharded = runHierarchyShardedLob(hardLobSyntheticDir(), 4);
@@ -518,7 +549,8 @@ void testShardedLobPreservesPerInstrumentOrder() {
     require(hierarchy_sharded.digest == sequential.books.stableStateDigest(), "hierarchy sharded preserves per-instrument order");
 }
 
-void testShardedLobUnknownOrderWithoutInstrumentGoesToUnresolvedCounter() {
+void testShardedLobUnknownOrderWithoutInstrumentGoesToUnresolvedCounter()
+{
     std::ostringstream out;
     LobProcessorConfig config;
     config.snapshot_interval_events = 0;

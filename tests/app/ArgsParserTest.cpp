@@ -1,16 +1,21 @@
 #include "TestSupport.hpp"
 
-namespace md::test {
-namespace {
+namespace md::test
+{
+namespace
+{
 
 void expectArgsErrorContains(
     const std::vector<std::string>& args,
     std::string_view expected_message,
-    const std::string& case_name
-) {
-    try {
+    const std::string& case_name)
+{
+    try
+    {
         parseArgs(args);
-    } catch (const ArgsError& e) {
+    }
+    catch (const ArgsError& e)
+    {
         requireContains(e.what(), expected_message, case_name + ": unexpected error message");
         return;
     }
@@ -20,7 +25,8 @@ void expectArgsErrorContains(
 
 } // namespace
 
-void testArgsParserAllSupportedForms() {
+void testArgsParserAllSupportedForms()
+{
     const auto dir = makeTempDir("args");
     const auto file = dir / "sample.ndjson";
     writeFile(file, line(1, 1) + "\n");
@@ -58,9 +64,12 @@ void testArgsParserAllSupportedForms() {
 
     const auto explicit_hierarchy = parseArgs({
         "ingest",
-        "--mode", "hierarchy",
-        "--input", dir.string(),
-        "--input-format", "feather",
+        "--mode",
+        "hierarchy",
+        "--input",
+        dir.string(),
+        "--input-format",
+        "feather",
     });
     require(explicit_hierarchy.mode == RunMode::Hierarchy, "explicit hierarchy parsed");
     require(explicit_hierarchy.input_format == InputFormat::Feather, "feather input format parsed");
@@ -85,7 +94,8 @@ void testArgsParserAllSupportedForms() {
     std::filesystem::remove_all(dir);
 }
 
-void testArgsParserAcceptsLobFlag() {
+void testArgsParserAcceptsLobFlag()
+{
     const auto dir = makeTempDir("args_lob");
     const auto file = dir / "sample.ndjson";
     writeFile(file, line(1, 1) + "\n");
@@ -102,17 +112,21 @@ void testArgsParserAcceptsLobFlag() {
     std::filesystem::remove_all(dir);
 }
 
-void testArgsParserAcceptsLobSummaryFlag() {
+void testArgsParserAcceptsLobSummaryFlag()
+{
     const auto dir = makeTempDir("args_lob_summary");
     const auto file = dir / "sample.ndjson";
     writeFile(file, line(1, 1) + "\n");
 
     const auto config = parseArgs({
         "ingest",
-        "--mode", "standard",
-        "--input", file.string(),
+        "--mode",
+        "standard",
+        "--input",
+        file.string(),
         "--lob-summary",
-        "--lob-summary-depth", "2",
+        "--lob-summary-depth",
+        "2",
     });
 
     require(config.mode == RunMode::Standard, "lob summary keeps standard mode");
@@ -123,26 +137,32 @@ void testArgsParserAcceptsLobSummaryFlag() {
     expectArgsErrorContains(
         {"ingest", "--mode", "standard", "--input", file.string(), "--lob-summary", "--lob"},
         "--lob-summary cannot be combined with --lob",
-        "lob summary rejects hw2 lob processor"
-    );
+        "lob summary rejects hw2 lob processor");
 
     std::filesystem::remove_all(dir);
 }
 
-void testArgsParserAcceptsSnapshotOptions() {
+void testArgsParserAcceptsSnapshotOptions()
+{
     const auto dir = makeTempDir("args_lob_options");
     const auto file = dir / "sample.ndjson";
     writeFile(file, line(1, 1) + "\n");
 
     const auto config = parseArgs({
         "ingest",
-        "--mode", "standard",
-        "--input", file.string(),
+        "--mode",
+        "standard",
+        "--input",
+        file.string(),
         "--lob",
-        "--snapshot-depth", "3",
-        "--snapshot-interval-events", "2",
-        "--max-snapshots", "1",
-        "--lob-workers", "4",
+        "--snapshot-depth",
+        "3",
+        "--snapshot-interval-events",
+        "2",
+        "--max-snapshots",
+        "1",
+        "--lob-workers",
+        "4",
     });
 
     require(config.use_lob_processor, "lob flag parsed with snapshot options");
@@ -153,22 +173,27 @@ void testArgsParserAcceptsSnapshotOptions() {
 
     const auto async_config = parseArgs({
         "ingest",
-        "--mode", "standard",
-        "--input", file.string(),
+        "--mode",
+        "standard",
+        "--input",
+        file.string(),
         "--lob",
-        "--snapshot-writer", "async",
-        "--snapshot-output", (dir / "snapshots.txt").string(),
+        "--snapshot-writer",
+        "async",
+        "--snapshot-output",
+        (dir / "snapshots.txt").string(),
     });
     require(async_config.snapshot_writer_mode == SnapshotWriterMode::Async, "async snapshot writer parsed");
     require(
         async_config.snapshot_output_path == (dir / "snapshots.txt"),
-        "snapshot output path parsed"
-    );
+        "snapshot output path parsed");
 
     const auto shortcut_config = parseArgs({
         "ingest",
-        "--mode", "standard",
-        "--input", file.string(),
+        "--mode",
+        "standard",
+        "--input",
+        file.string(),
         "--lob",
         "--async-snapshots",
     });
@@ -177,23 +202,21 @@ void testArgsParserAcceptsSnapshotOptions() {
     expectArgsErrorContains(
         {"ingest", "--mode", "standard", "--input", file.string(), "--lob", "--snapshot-writer", "later"},
         "unknown snapshot writer mode",
-        "unknown snapshot writer mode"
-    );
+        "unknown snapshot writer mode");
     expectArgsErrorContains(
         {"ingest", "--mode", "standard", "--input", file.string(), "--lob", "--lob-workers", "0"},
         "lob worker count must be greater than zero",
-        "zero lob worker count"
-    );
+        "zero lob worker count");
     expectArgsErrorContains(
         {"ingest", "--mode", "standard", "--input", file.string(), "--lob-workers", "2"},
         "--lob-workers requires --lob",
-        "lob workers without lob"
-    );
+        "lob workers without lob");
 
     std::filesystem::remove_all(dir);
 }
 
-void testArgsParserRejectsSnapshotIntervalZero() {
+void testArgsParserRejectsSnapshotIntervalZero()
+{
     const auto dir = makeTempDir("args_lob_zero_interval");
     const auto file = dir / "sample.ndjson";
     writeFile(file, line(1, 1) + "\n");
@@ -201,13 +224,13 @@ void testArgsParserRejectsSnapshotIntervalZero() {
     expectArgsErrorContains(
         {"ingest", "--mode", "standard", "--input", file.string(), "--lob", "--snapshot-interval-events", "0"},
         "snapshot interval must be greater than zero",
-        "zero snapshot interval"
-    );
+        "zero snapshot interval");
 
     std::filesystem::remove_all(dir);
 }
 
-void testArgsParserAcceptsLobWithHardModes() {
+void testArgsParserAcceptsLobWithHardModes()
+{
     const auto dir = makeTempDir("args_lob_hard_modes");
 
     const auto flat = parseArgs({"ingest", "--mode", "flat", "--input", dir.string(), "--lob"});
@@ -221,17 +244,23 @@ void testArgsParserAcceptsLobWithHardModes() {
     std::filesystem::remove_all(dir);
 }
 
-void testArgsParserAcceptsLobWithBenchmarkMode() {
+void testArgsParserAcceptsLobWithBenchmarkMode()
+{
     const auto dir = makeTempDir("args_lob_benchmark");
 
     const auto config = parseArgs({
         "ingest",
-        "--benchmark", dir.string(),
+        "--benchmark",
+        dir.string(),
         "--lob",
-        "--lob-workers", "2",
-        "--snapshot-depth", "99",
-        "--snapshot-interval-events", "0",
-        "--max-snapshots", "99",
+        "--lob-workers",
+        "2",
+        "--snapshot-depth",
+        "99",
+        "--snapshot-interval-events",
+        "0",
+        "--max-snapshots",
+        "99",
     });
 
     require(config.mode == RunMode::Benchmark, "lob benchmark mode parsed");
@@ -243,7 +272,8 @@ void testArgsParserAcceptsLobWithBenchmarkMode() {
     std::filesystem::remove_all(dir);
 }
 
-void testUsageMentionsLobOptions() {
+void testUsageMentionsLobOptions()
+{
     const auto usage = ArgsParser::usage("ingest");
 
     requireContains(usage, "--lob", "usage mentions lob flag");

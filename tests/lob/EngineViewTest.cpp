@@ -6,15 +6,17 @@
 #include <optional>
 #include <string>
 
-namespace md::test {
-namespace {
+namespace md::test
+{
+namespace
+{
 
 MarketDataEvent addHistorical(
     std::uint64_t order_id,
     Side side,
     md::lob::Price price,
-    md::lob::Quantity size
-) {
+    md::lob::Quantity size)
+{
     MarketDataEvent event;
     event.instrument_id = 42;
     event.order_id = order_id;
@@ -29,8 +31,8 @@ void requireLevel(
     const std::optional<md::lob::BookLevel>& level,
     md::lob::Price price,
     md::lob::Quantity size,
-    const std::string& message
-) {
+    const std::string& message)
+{
     require(level.has_value(), message + ": missing level");
     require(level->price == price, message + ": unexpected price");
     require(level->size == size, message + ": unexpected size");
@@ -38,7 +40,8 @@ void requireLevel(
 
 } // namespace
 
-void testEngineViewsArePrivate() {
+void testEngineViewsArePrivate()
+{
     md::lob::HistoricalLOB historical_book;
     historical_book.apply(addHistorical(1, Side::Bid, 99, 10));
 

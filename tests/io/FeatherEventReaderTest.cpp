@@ -18,10 +18,13 @@
 #include <utility>
 #include <vector>
 
-namespace md::test {
-namespace {
+namespace md::test
+{
+namespace
+{
 
-struct FeatherRow {
+struct FeatherRow
+{
     std::string ts_recv;
     std::string ts_event;
     std::uint64_t instrument_id{};
@@ -32,25 +35,28 @@ struct FeatherRow {
     std::uint64_t size{};
 };
 
-void requireOk(const arrow::Status& status, const std::string& message) {
+void requireOk(const arrow::Status& status, const std::string& message)
+{
     require(status.ok(), message + ": " + status.ToString());
 }
 
 template <typename Result>
-auto unwrap(Result&& result, const std::string& message) {
+auto unwrap(Result&& result, const std::string& message)
+{
     require(result.ok(), message + ": " + result.status().ToString());
     return *std::forward<Result>(result);
 }
 
-void appendString(arrow::StringBuilder& builder, const std::string& value) {
+void appendString(arrow::StringBuilder& builder, const std::string& value)
+{
     requireOk(builder.Append(value), "append string");
 }
 
 void writeFeatherFile(
     const std::filesystem::path& path,
     const std::vector<FeatherRow>& rows,
-    bool include_ts_recv = true
-) {
+    bool include_ts_recv = true)
+{
     arrow::StringBuilder ts_recv;
     arrow::StringBuilder ts_event;
     arrow::UInt64Builder instrument_id;
@@ -60,16 +66,20 @@ void writeFeatherFile(
     arrow::StringBuilder price;
     arrow::UInt64Builder size;
 
-    for (const auto& row : rows) {
+    for (const auto& row : rows)
+    {
         appendString(ts_recv, row.ts_recv);
         appendString(ts_event, row.ts_event);
         requireOk(instrument_id.Append(row.instrument_id), "append instrument_id");
         appendString(order_id, row.order_id);
         appendString(side, row.side);
         appendString(action, row.action);
-        if (row.price.has_value()) {
+        if (row.price.has_value())
+        {
             appendString(price, *row.price);
-        } else {
+        }
+        else
+        {
             requireOk(price.AppendNull(), "append null price");
         }
         requireOk(size.Append(row.size), "append size");
@@ -95,7 +105,8 @@ void writeFeatherFile(
 
     std::vector<std::shared_ptr<arrow::Field>> fields;
     std::vector<std::shared_ptr<arrow::Array>> arrays;
-    if (include_ts_recv) {
+    if (include_ts_recv)
+    {
         fields.push_back(arrow::field("ts_recv", arrow::utf8()));
         arrays.push_back(ts_recv_array);
     }
@@ -124,21 +135,24 @@ void writeFeatherFile(
     requireOk(output->Close(), "close feather output");
 }
 
-std::vector<FeatherRow> file0Rows() {
+std::vector<FeatherRow> file0Rows()
+{
     return {
         {"100", "100", 1, "1", "B", "A", "100000000000", 10},
         {"400", "400", 1, "1", "", "C", std::nullopt, 4},
     };
 }
 
-std::vector<FeatherRow> file1Rows() {
+std::vector<FeatherRow> file1Rows()
+{
     return {
         {"200", "200", 1, "2", "A", "A", "105000000000", 7},
         {"500", "500", 2, "4", "A", "A", "210000000000", 5},
     };
 }
 
-std::vector<FeatherRow> file2Rows() {
+std::vector<FeatherRow> file2Rows()
+{
     return {
         {"300", "300", 2, "3", "B", "A", "200000000000", 20},
         {"600", "600", 1, "2", "A", "M", "104000000000", 5},
@@ -146,7 +160,8 @@ std::vector<FeatherRow> file2Rows() {
     };
 }
 
-std::filesystem::path makeSyntheticFeatherDir() {
+std::filesystem::path makeSyntheticFeatherDir()
+{
     const auto dir = makeTempDir("feather_hard_lob");
     writeFeatherFile(dir / "file_0.feather", file0Rows());
     writeFeatherFile(dir / "file_1.feather", file1Rows());
@@ -154,7 +169,8 @@ std::filesystem::path makeSyntheticFeatherDir() {
     return dir;
 }
 
-std::string jsonFlatDigest() {
+std::string jsonFlatDigest()
+{
     std::ostringstream out;
     std::ostringstream err;
     LobProcessorConfig config;
@@ -166,7 +182,8 @@ std::string jsonFlatDigest() {
     return processor.books().stableStateDigest();
 }
 
-std::string jsonHierarchyDigest() {
+std::string jsonHierarchyDigest()
+{
     std::ostringstream out;
     std::ostringstream err;
     LobProcessorConfig config;
@@ -178,7 +195,8 @@ std::string jsonHierarchyDigest() {
     return processor.books().stableStateDigest();
 }
 
-std::string featherFlatDigest(const std::filesystem::path& dir) {
+std::string featherFlatDigest(const std::filesystem::path& dir)
+{
     std::ostringstream out;
     std::ostringstream err;
     LobProcessorConfig config;
@@ -192,7 +210,8 @@ std::string featherFlatDigest(const std::filesystem::path& dir) {
     return processor.books().stableStateDigest();
 }
 
-std::string featherHierarchyDigest(const std::filesystem::path& dir) {
+std::string featherHierarchyDigest(const std::filesystem::path& dir)
+{
     std::ostringstream out;
     std::ostringstream err;
     LobProcessorConfig config;
@@ -206,7 +225,8 @@ std::string featherHierarchyDigest(const std::filesystem::path& dir) {
     return processor.books().stableStateDigest();
 }
 
-struct RealLobRun {
+struct RealLobRun
+{
     std::size_t messages{};
     std::size_t chronological_violations{};
     std::size_t unresolved_events{};
@@ -216,8 +236,8 @@ struct RealLobRun {
 RealLobRun runRealLobDigest(
     const std::filesystem::path& dir,
     InputFormat input_format,
-    bool hierarchy
-) {
+    bool hierarchy)
+{
     std::ostringstream out;
     std::ostringstream err;
     LobProcessorConfig config;
@@ -226,8 +246,8 @@ RealLobRun runRealLobDigest(
     LobMarketDataEventProcessor processor{out, config};
 
     const auto result = hierarchy
-        ? HierarchicalMergeRunner{}.run(dir, processor, false, err, input_format)
-        : FlatMergeRunner{}.run(dir, processor, false, err, input_format);
+                            ? HierarchicalMergeRunner{}.run(dir, processor, false, err, input_format)
+                            : FlatMergeRunner{}.run(dir, processor, false, err, input_format);
     processor.finishSnapshots();
 
     return RealLobRun{
@@ -238,14 +258,17 @@ RealLobRun runRealLobDigest(
     };
 }
 
-bool realFolderFeatherTestEnabled() {
+bool realFolderFeatherTestEnabled()
+{
     const char* enabled = std::getenv("MD_RUN_REAL_FEATHER_TEST");
     return enabled != nullptr && std::string_view{enabled} == "1";
 }
 
-std::filesystem::path envOrDefaultPath(const char* env_name, const std::filesystem::path& fallback) {
+std::filesystem::path envOrDefaultPath(const char* env_name, const std::filesystem::path& fallback)
+{
     const char* value = std::getenv(env_name);
-    if (value == nullptr || std::string_view{value}.empty()) {
+    if (value == nullptr || std::string_view{value}.empty())
+    {
         return fallback;
     }
     return value;
@@ -253,15 +276,15 @@ std::filesystem::path envOrDefaultPath(const char* env_name, const std::filesyst
 
 } // namespace
 
-void testFeatherReaderReadsSyntheticRows() {
+void testFeatherReaderReadsSyntheticRows()
+{
     const auto dir = makeTempDir("feather_reader_rows");
     const auto path = dir / "sample.feather";
     writeFeatherFile(path, file0Rows());
 
     std::vector<MarketDataEvent> events;
-    FeatherEventReader{path}.readAll(7, [&events](const MarketDataEvent& event) {
-        events.push_back(event);
-    });
+    FeatherEventReader{path}.readAll(7, [&events](const MarketDataEvent& event)
+                                     { events.push_back(event); });
 
     require(events.size() == 2, "feather reader synthetic row count");
     require(events[0].timestamp == 100, "feather reader first timestamp");
@@ -277,34 +300,33 @@ void testFeatherReaderReadsSyntheticRows() {
     std::filesystem::remove_all(dir);
 }
 
-void testFeatherReaderMapsNullPriceToUndef() {
+void testFeatherReaderMapsNullPriceToUndef()
+{
     const auto dir = makeTempDir("feather_reader_null_price");
     const auto path = dir / "sample.feather";
     writeFeatherFile(path, file0Rows());
 
     std::vector<MarketDataEvent> events;
-    FeatherEventReader{path}.readAll(0, [&events](const MarketDataEvent& event) {
-        events.push_back(event);
-    });
+    FeatherEventReader{path}.readAll(0, [&events](const MarketDataEvent& event)
+                                     { events.push_back(event); });
 
     require(events.size() == 2, "feather reader null price row count");
     require(
         events[1].price == std::numeric_limits<std::int64_t>::max(),
-        "feather reader maps null price to undef"
-    );
+        "feather reader maps null price to undef");
 
     std::filesystem::remove_all(dir);
 }
 
-void testFeatherReaderFallsBackToTsEventWhenTsRecvColumnIsMissing() {
+void testFeatherReaderFallsBackToTsEventWhenTsRecvColumnIsMissing()
+{
     const auto dir = makeTempDir("feather_reader_ts_event_fallback");
     const auto path = dir / "sample.feather";
     writeFeatherFile(path, file0Rows(), false);
 
     std::vector<MarketDataEvent> events;
-    FeatherEventReader{path}.readAll(0, [&events](const MarketDataEvent& event) {
-        events.push_back(event);
-    });
+    FeatherEventReader{path}.readAll(0, [&events](const MarketDataEvent& event)
+                                     { events.push_back(event); });
 
     require(events.size() == 2, "feather reader ts_event fallback row count");
     require(events[0].ts_recv == 0, "feather reader missing ts_recv leaves field zero");
@@ -314,43 +336,44 @@ void testFeatherReaderFallsBackToTsEventWhenTsRecvColumnIsMissing() {
     std::filesystem::remove_all(dir);
 }
 
-void testFeatherFlatLobMatchesJsonFlatLobOnSynthetic() {
+void testFeatherFlatLobMatchesJsonFlatLobOnSynthetic()
+{
     const auto dir = makeSyntheticFeatherDir();
     require(featherFlatDigest(dir) == jsonFlatDigest(), "feather flat digest matches json flat digest");
     std::filesystem::remove_all(dir);
 }
 
-void testFeatherHierarchyLobMatchesJsonHierarchyLobOnSynthetic() {
+void testFeatherHierarchyLobMatchesJsonHierarchyLobOnSynthetic()
+{
     const auto dir = makeSyntheticFeatherDir();
     require(
         featherHierarchyDigest(dir) == jsonHierarchyDigest(),
-        "feather hierarchy digest matches json hierarchy digest"
-    );
+        "feather hierarchy digest matches json hierarchy digest");
     std::filesystem::remove_all(dir);
 }
 
-void testFeatherFlatAndHierarchyHaveSameDigestOnSynthetic() {
+void testFeatherFlatAndHierarchyHaveSameDigestOnSynthetic()
+{
     const auto dir = makeSyntheticFeatherDir();
     require(
         featherFlatDigest(dir) == featherHierarchyDigest(dir),
-        "feather flat and hierarchy synthetic digests match"
-    );
+        "feather flat and hierarchy synthetic digests match");
     std::filesystem::remove_all(dir);
 }
 
-void testFeatherFlatAndHierarchyHaveSameDigestOnRealFolder() {
-    if (!realFolderFeatherTestEnabled()) {
+void testFeatherFlatAndHierarchyHaveSameDigestOnRealFolder()
+{
+    if (!realFolderFeatherTestEnabled())
+    {
         return;
     }
 
     const auto json_dir = envOrDefaultPath(
         "MD_REAL_JSON_FOLDER",
-        testDataDir().parent_path().parent_path() / "data" / "XEUR-20260409-HTT6HHLT6R"
-    );
+        testDataDir().parent_path().parent_path() / "data" / "XEUR-20260409-HTT6HHLT6R");
     const auto feather_dir = envOrDefaultPath(
         "MD_REAL_FEATHER_FOLDER",
-        testDataDir().parent_path().parent_path() / "data_feather" / "XEUR-20260409-HTT6HHLT6R"
-    );
+        testDataDir().parent_path().parent_path() / "data_feather" / "XEUR-20260409-HTT6HHLT6R");
 
     require(std::filesystem::is_directory(json_dir), "real JSON folder exists");
     require(std::filesystem::is_directory(feather_dir), "real Feather folder exists");

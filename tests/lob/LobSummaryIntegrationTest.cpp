@@ -8,24 +8,30 @@
 
 #include <sstream>
 
-namespace md::test {
-namespace {
+namespace md::test
+{
+namespace
+{
 
-std::filesystem::path lobDataDir() {
+std::filesystem::path lobDataDir()
+{
     return testDataDir().parent_path() / "data";
 }
 
-std::filesystem::path lobBasicFile() {
+std::filesystem::path lobBasicFile()
+{
     return lobDataDir() / "lob_basic.ndjson";
 }
 
-std::filesystem::path lobMultiDir() {
+std::filesystem::path lobMultiDir()
+{
     return lobDataDir() / "lob_multi";
 }
 
 } // namespace
 
-void testStandardRunnerCanBuildLobSummary() {
+void testStandardRunnerCanBuildLobSummary()
+{
     std::ostringstream err;
     std::ostringstream out;
     md::lob::HistoricalLobProcessor processor;
@@ -49,7 +55,8 @@ void testStandardRunnerCanBuildLobSummary() {
     requireContains(text, "lob_digest=", "lob summary digest");
 }
 
-void testFlatAndHierarchyBuildSameLobDigest() {
+void testFlatAndHierarchyBuildSameLobDigest()
+{
     std::ostringstream flat_err;
     md::lob::HistoricalLobProcessor flat_processor;
     const auto flat_result = FlatMergeRunner{}.run(lobMultiDir(), flat_processor, false, flat_err);
@@ -60,8 +67,7 @@ void testFlatAndHierarchyBuildSameLobDigest() {
         lobMultiDir(),
         hierarchy_processor,
         false,
-        hierarchy_err
-    );
+        hierarchy_err);
 
     require(flat_result.summary.total_messages_processed == 4, "flat lob summary message count");
     require(hierarchy_result.summary.total_messages_processed == 4, "hierarchy lob summary message count");
