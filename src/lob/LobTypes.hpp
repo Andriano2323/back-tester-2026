@@ -1,19 +1,18 @@
 #pragma once
 
 #include "domain/MarketDataEvent.hpp"
-
-#include <cstdint>
+#include "domain/Types.hpp"
 
 namespace md::lob
 {
 
-using InstrumentId = std::uint64_t;
-using HistoricalOrderId = std::uint64_t;
-using SyntheticOrderId = std::uint64_t;
-using EngineId = std::uint64_t;
-using TimestampNs = std::int64_t;
-using Price = std::int64_t;
-using Quantity = std::uint64_t;
+using InstrumentId = md::InstrumentId;
+using HistoricalOrderId = md::HistoricalOrderId;
+using SyntheticOrderId = md::SyntheticOrderId;
+using EngineId = md::TradingEngineId;
+using TimestampNs = md::TimestampNs;
+using Price = md::Price;
+using Quantity = md::Quantity;
 
 using Side = md::Side;
 using Action = md::Action;

@@ -44,6 +44,7 @@ set(INGEST_TEST_SOURCES
     tests/book/LimitOrderBookTest.cpp
     tests/concurrency/NonBlockingQueueTest.cpp
     tests/domain/MarketDataEventTest.cpp
+    tests/domain/TypesTest.cpp
     tests/lob/EngineViewTest.cpp
     tests/lob/FillSimulatorTest.cpp
     tests/lob/HistoricalLOBTest.cpp
@@ -60,6 +61,7 @@ set(INGEST_TEST_SOURCES
     tests/runners/ResultPrinterTest.cpp
     tests/runners/StandardRunnerLobIntegrationTest.cpp
     tests/runners/StandardRunnerTest.cpp
+    tests/trading/TradingEngineConfigTest.cpp
 )
 
 if (ENABLE_ARROW)
