@@ -2,6 +2,7 @@
 
 #include "domain/MarketDataEvent.hpp"
 #include "parsing/JsonParser.hpp"
+#include "runners/DispatchSupport.hpp"
 #ifdef MD_ENABLE_ARROW
 #include "runners/FeatherHardRunnerSupport.hpp"
 #endif
@@ -195,6 +196,7 @@ void dispatchMergedQueue(
     IMarketDataEventProcessor& processor,
     ProcessingSummary& summary)
 {
+    DispatchSeq last_issued = invalid_dispatch_seq;
     while (true)
     {
         QueueItem item = input->pop();
@@ -203,7 +205,7 @@ void dispatchMergedQueue(
             return;
         }
 
-        processor.processMarketDataEvent(item.event);
+        detail::dispatchMarketDataEvent(last_issued, item.event, processor);
         summary.observe(item.event);
     }
 }

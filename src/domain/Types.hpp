@@ -19,6 +19,7 @@ using Price = std::int64_t;
 using Quantity = std::uint64_t;
 
 using SeqNo = std::uint64_t;
+using DispatchSeq = std::uint64_t;
 using SourceFileId = std::uint32_t;
 using SourceSequence = std::uint64_t;
 
@@ -27,6 +28,8 @@ inline constexpr HistoricalOrderId invalid_historical_order_id = 0;
 inline constexpr OrderId invalid_order_id = 0;
 inline constexpr SyntheticOrderId invalid_synthetic_order_id = 0;
 inline constexpr TradingEngineId invalid_trading_engine_id = 0;
+inline constexpr DispatchSeq invalid_dispatch_seq = 0;
+inline constexpr DispatchSeq first_dispatch_seq = 1;
 
 inline constexpr Price undefined_price = std::numeric_limits<Price>::max();
 inline constexpr RawTimestampNs raw_undefined_timestamp = std::numeric_limits<RawTimestampNs>::max();
@@ -72,6 +75,11 @@ enum class OrderStatus : std::uint8_t
 [[nodiscard]] constexpr bool isValidTradingEngineId(TradingEngineId engine_id) noexcept
 {
     return engine_id != invalid_trading_engine_id;
+}
+
+[[nodiscard]] constexpr bool isValidDispatchSeq(DispatchSeq sequence) noexcept
+{
+    return sequence != invalid_dispatch_seq;
 }
 
 [[nodiscard]] constexpr bool isValidSide(Side side) noexcept

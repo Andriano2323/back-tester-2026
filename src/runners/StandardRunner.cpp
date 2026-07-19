@@ -1,6 +1,7 @@
 #include "runners/StandardRunner.hpp"
 
 #include "parsing/JsonParser.hpp"
+#include "runners/DispatchSupport.hpp"
 
 #include <chrono>
 #include <filesystem>
@@ -45,6 +46,7 @@ RunResult StandardRunner::run(
 
     const auto started_at = std::chrono::steady_clock::now();
 
+    DispatchSeq last_issued = invalid_dispatch_seq;
     std::size_t line_number = 0;
     std::string line;
     while (std::getline(file, line))
@@ -53,7 +55,7 @@ RunResult StandardRunner::run(
         ++result.diagnostics.total_lines_read;
 
         const auto event = parseMarketDataEventLine(line, line_number);
-        processor.processMarketDataEvent(event);
+        detail::dispatchMarketDataEvent(last_issued, event, processor);
         result.summary.observe(event);
     }
 
